@@ -4,7 +4,7 @@
 -record(do_gen_in, {count = 200, to, urls}).
 -record(do_freq_in, {data, fd}).
 -record(do_regex_in, {re, to, mod}).
--define(UC_FREQ_OUT, "string/freq_dict.erl").
+-define(UC_FREQ_OUT, "string/freq_dict.hrl").
 
 gen() ->
 	application:start(inets),
@@ -38,8 +38,7 @@ do_gen(Par) ->
 		send_all(Par#do_gen_in.to, [{Str}]),
 		io:format("OK", []),
 		do_gen(Par#do_gen_in{  });
-	save -> send_all(Par#do_gen_in.to, [save]), do_gen(Par);
-	_    -> do_gen(Par) 
+	Mess -> send_all(Par#do_gen_in.to, [Mess]), do_gen(Par)
 	end.
 
 send_all([], _) -> ok;
@@ -50,6 +49,8 @@ send_mess(Dest, [Mess|List]) -> Dest ! Mess, send_mess(Dest, List).
 
 do_freq(Par) ->
 	receive
+		dump   -> to_file(dict:to_list(Par#do_freq_in.data), Par#do_freq_in.fd),
+			do_freq(Par);
 		save   -> io:format("~w", [dict:to_list(Par#do_freq_in.data)]),
 			do_freq(Par);
 		{Str}  when is_list(Str) ->
@@ -83,9 +84,9 @@ do_regex(Par) ->
 	end.
 
 to_file(Dict, OutFd) -> to_file(Dict, OutFd, sum(Dict, 0)).
-to_file([], OutFd, _) ->  io:format(OutFd, "freq_dict(_) -> na; ~n", []).
+to_file([], OutFd, _) ->  io:format(OutFd, "freq_dict(_) -> 0. ~n", []);
 to_file([H|T], OutFd, Sum) -> save(OutFd, H, Sum), to_file(T, OutFd, Sum).
 save(OutFd, {Char, Count}, Sum) -> io:format(OutFd, "freq_dict(~w) -> ~w; ~n", [Char, Count/Sum]).
 
 sum([], Sum) -> Sum;
-sum([{Char|Count}|T], Sum) -> sum(T, Count+Sum).
+sum([{Char, Count}|T], Sum) -> sum(T, Count+Sum).

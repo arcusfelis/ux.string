@@ -1,50 +1,189 @@
-char_to_upper(16#0061) -> 16#0041; %LATIN SMALL LETTER A 
-char_to_upper(16#0062) -> 16#0042; %LATIN SMALL LETTER B 
-char_to_upper(16#0063) -> 16#0043; %LATIN SMALL LETTER C 
-char_to_upper(16#0064) -> 16#0044; %LATIN SMALL LETTER D 
-char_to_upper(16#0065) -> 16#0045; %LATIN SMALL LETTER E 
-char_to_upper(16#0066) -> 16#0046; %LATIN SMALL LETTER F 
-char_to_upper(16#0067) -> 16#0047; %LATIN SMALL LETTER G 
-char_to_upper(16#0068) -> 16#0048; %LATIN SMALL LETTER H 
-char_to_upper(16#0069) -> 16#0049; %LATIN SMALL LETTER I 
-char_to_upper(16#006A) -> 16#004A; %LATIN SMALL LETTER J 
-char_to_upper(16#006B) -> 16#004B; %LATIN SMALL LETTER K 
-char_to_upper(16#006C) -> 16#004C; %LATIN SMALL LETTER L 
-char_to_upper(16#006D) -> 16#004D; %LATIN SMALL LETTER M 
-char_to_upper(16#006E) -> 16#004E; %LATIN SMALL LETTER N 
-char_to_upper(16#006F) -> 16#004F; %LATIN SMALL LETTER O 
-char_to_upper(16#0070) -> 16#0050; %LATIN SMALL LETTER P 
-char_to_upper(16#0071) -> 16#0051; %LATIN SMALL LETTER Q 
-char_to_upper(16#0072) -> 16#0052; %LATIN SMALL LETTER R 
-char_to_upper(16#0073) -> 16#0053; %LATIN SMALL LETTER S 
-char_to_upper(16#0074) -> 16#0054; %LATIN SMALL LETTER T 
-char_to_upper(16#0075) -> 16#0055; %LATIN SMALL LETTER U 
-char_to_upper(16#0076) -> 16#0056; %LATIN SMALL LETTER V 
-char_to_upper(16#0077) -> 16#0057; %LATIN SMALL LETTER W 
-char_to_upper(16#0078) -> 16#0058; %LATIN SMALL LETTER X 
-char_to_upper(16#0079) -> 16#0059; %LATIN SMALL LETTER Y 
-char_to_upper(16#007A) -> 16#005A; %LATIN SMALL LETTER Z 
+char_to_upper(16#69) -> 16#49;
+char_to_upper(16#61) -> 16#41;
+char_to_upper(16#65) -> 16#45;
+char_to_upper(16#20) -> 16#20;
+char_to_upper(16#74) -> 16#54;
+char_to_upper(16#22) -> 16#22;
+char_to_upper(16#25) -> 16#25;
+char_to_upper(16#2f) -> 16#2f;
+char_to_upper(16#6c) -> 16#4c;
+char_to_upper(16#72) -> 16#52;
+char_to_upper(16#73) -> 16#53;
+char_to_upper(16#3e) -> 16#3e;
+char_to_upper(16#3c) -> 16#3c;
+char_to_upper(16#6f) -> 16#4f;
+char_to_upper(16#6e) -> 16#4e;
+char_to_upper(16#64) -> 16#44;
+char_to_upper(16#70) -> 16#50;
+char_to_upper(16#3d) -> 16#3d;
+char_to_upper(16#30) -> 16#30;
+char_to_upper(16#68) -> 16#48;
+char_to_upper(16#9) -> 16#9;
+char_to_upper(16#63) -> 16#43;
+char_to_upper(16#6b) -> 16#4b;
+char_to_upper(16#67) -> 16#47;
+char_to_upper(16#77) -> 16#57;
+char_to_upper(16#3a) -> 16#3a;
+char_to_upper(16#6d) -> 16#4d;
+char_to_upper(16#2d) -> 16#2d;
+char_to_upper(16#2e) -> 16#2e;
+char_to_upper(16#66) -> 16#46;
+char_to_upper(16#44) -> 16#44;
+char_to_upper(16#a) -> 16#a;
+char_to_upper(16#42) -> 16#42;
+char_to_upper(16#41) -> 16#41;
+char_to_upper(16#75) -> 16#55;
+char_to_upper(16#45) -> 16#45;
+char_to_upper(16#38) -> 16#38;
+char_to_upper(16#31) -> 16#31;
+char_to_upper(16#62) -> 16#42;
+char_to_upper(16#76) -> 16#56;
+char_to_upper(16#3b) -> 16#3b;
+char_to_upper(16#79) -> 16#59;
+char_to_upper(16#78) -> 16#58;
+char_to_upper(16#39) -> 16#39;
+char_to_upper(16#35) -> 16#35;
+char_to_upper(16#34) -> 16#34;
+char_to_upper(16#43) -> 16#43;
+char_to_upper(16#32) -> 16#32;
+char_to_upper(16#33) -> 16#33;
+char_to_upper(16#5f) -> 16#5f;
+char_to_upper(16#36) -> 16#36;
+char_to_upper(16#46) -> 16#46;
+char_to_upper(16#2c) -> 16#2c;
+char_to_upper(16#37) -> 16#37;
+char_to_upper(16#26) -> 16#26;
+char_to_upper(16#430) -> 16#410;
+char_to_upper(16#23) -> 16#23;
+char_to_upper(16#57) -> 16#57;
+char_to_upper(16#50) -> 16#50;
+char_to_upper(16#7a) -> 16#5a;
+char_to_upper(16#6a) -> 16#4a;
+char_to_upper(16#53) -> 16#53;
+char_to_upper(16#4e) -> 16#4e;
+char_to_upper(16#438) -> 16#418;
+char_to_upper(16#21) -> 16#21;
+char_to_upper(16#29) -> 16#29;
+char_to_upper(16#28) -> 16#28;
+char_to_upper(16#43e) -> 16#41e;
+char_to_upper(16#54) -> 16#54;
+char_to_upper(16#440) -> 16#420;
+char_to_upper(16#442) -> 16#422;
+char_to_upper(16#43d) -> 16#41d;
+char_to_upper(16#4d) -> 16#4d;
+char_to_upper(16#435) -> 16#415;
+char_to_upper(16#4c) -> 16#4c;
+char_to_upper(16#441) -> 16#421;
+char_to_upper(16#43a) -> 16#41a;
+char_to_upper(16#49) -> 16#49;
+char_to_upper(16#43b) -> 16#41b;
+char_to_upper(16#48) -> 16#48;
+char_to_upper(16#627) -> 16#627;
+char_to_upper(16#4b) -> 16#4b;
+char_to_upper(16#b7) -> 16#b7;
+char_to_upper(16#3f) -> 16#3f;
+char_to_upper(16#47) -> 16#47;
+char_to_upper(16#52) -> 16#52;
+char_to_upper(16#94d) -> 16#94d;
+char_to_upper(16#71) -> 16#51;
+char_to_upper(16#93e) -> 16#93e;
+char_to_upper(16#27) -> 16#27;
+char_to_upper(16#56) -> 16#56;
+char_to_upper(16#434) -> 16#414;
+char_to_upper(16#443) -> 16#423;
+char_to_upper(16#2022) -> 16#2022;
+char_to_upper(16#6cc) -> 16#6cc;
+char_to_upper(16#5b) -> 16#5b;
+char_to_upper(16#5d) -> 16#5d;
+char_to_upper(16#93f) -> 16#93f;
+char_to_upper(16#44b) -> 16#42b;
+char_to_upper(16#43c) -> 16#41c;
+char_to_upper(16#55) -> 16#55;
+char_to_upper(16#432) -> 16#412;
+char_to_upper(16#631) -> 16#631;
+char_to_upper(16#648) -> 16#648;
+char_to_upper(16#4f) -> 16#4f;
+char_to_upper(16#646) -> 16#646;
+char_to_upper(16#433) -> 16#413;
+char_to_upper(16#930) -> 16#930;
+char_to_upper(16#e9) -> 16#c9;
+char_to_upper(16#43f) -> 16#41f;
+char_to_upper(16#44f) -> 16#42f;
+char_to_upper(16#5c) -> 16#5c;
+char_to_upper(16#e1) -> 16#c1;
+char_to_upper(16#644) -> 16#644;
+char_to_upper(16#935) -> 16#935;
+char_to_upper(16#928) -> 16#928;
+char_to_upper(16#456) -> 16#406;
+char_to_upper(16#915) -> 16#915;
+char_to_upper(16#645) -> 16#645;
+char_to_upper(16#62a) -> 16#62a;
+char_to_upper(16#ed) -> 16#cd;
+char_to_upper(16#439) -> 16#419;
+char_to_upper(16#924) -> 16#924;
+char_to_upper(16#938) -> 16#938;
+char_to_upper(16#7d) -> 16#7d;
+char_to_upper(16#7b) -> 16#7b;
+char_to_upper(16#44c) -> 16#42c;
+char_to_upper(16#62f) -> 16#62f;
+char_to_upper(16#947) -> 16#947;
+char_to_upper(16#647) -> 16#647;
+char_to_upper(16#437) -> 16#417;
+char_to_upper(16#431) -> 16#411;
+char_to_upper(16#9be) -> 16#9be;
+char_to_upper(16#92a) -> 16#92a;
+char_to_upper(16#445) -> 16#425;
+char_to_upper(16#940) -> 16#940;
+char_to_upper(16#d4d) -> 16#d4d;
+char_to_upper(16#92f) -> 16#92f;
+char_to_upper(16#64a) -> 16#64a;
+char_to_upper(16#628) -> 16#628;
+char_to_upper(16#e8) -> 16#c8;
+char_to_upper(16#633) -> 16#633;
+char_to_upper(16#448) -> 16#428;
+char_to_upper(16#fc) -> 16#dc;
+char_to_upper(16#4a) -> 16#4a;
+char_to_upper(16#bcd) -> 16#bcd;
+char_to_upper(16#92e) -> 16#92e;
+char_to_upper(16#446) -> 16#426;
+char_to_upper(16#2a) -> 16#2a;
+char_to_upper(16#e0) -> 16#c0;
+char_to_upper(16#9bf) -> 16#9bf;
+char_to_upper(16#6a9) -> 16#6a9;
+char_to_upper(16#e4) -> 16#c4;
+char_to_upper(16#412) -> 16#412;
+char_to_upper(16#f3) -> 16#d3;
+char_to_upper(16#41a) -> 16#41a;
+char_to_upper(16#6d5) -> 16#6d5;
+char_to_upper(16#44d) -> 16#42d;
+char_to_upper(16#5a) -> 16#5a;
+char_to_upper(16#10d8) -> 16#10d8;
+char_to_upper(16#649) -> 16#649;
+char_to_upper(16#9b0) -> 16#9b0;
+char_to_upper(16#447) -> 16#427;
+char_to_upper(16#e7) -> 16#c7;
+char_to_upper(16#932) -> 16#932;
+char_to_upper(16#10d0) -> 16#10d0;
+char_to_upper(16#2013) -> 16#2013;
+char_to_upper(16#902) -> 16#902;
+char_to_upper(16#9cd) -> 16#9cd;
+char_to_upper(16#eb) -> 16#cb;
+char_to_upper(16#421) -> 16#421;
+char_to_upper(16#101) -> 16#100;
+char_to_upper(16#d3f) -> 16#d3f;
+char_to_upper(16#641) -> 16#641;
+char_to_upper(16#e2) -> 16#c2;
 char_to_upper(16#00B5) -> 16#039C; %MICRO SIGN 
-char_to_upper(16#00E0) -> 16#00C0; %LATIN SMALL LETTER A WITH GRAVE 
-char_to_upper(16#00E1) -> 16#00C1; %LATIN SMALL LETTER A WITH ACUTE 
-char_to_upper(16#00E2) -> 16#00C2; %LATIN SMALL LETTER A WITH CIRCUMFLEX 
 char_to_upper(16#00E3) -> 16#00C3; %LATIN SMALL LETTER A WITH TILDE 
-char_to_upper(16#00E4) -> 16#00C4; %LATIN SMALL LETTER A WITH DIAERESIS 
 char_to_upper(16#00E5) -> 16#00C5; %LATIN SMALL LETTER A WITH RING ABOVE 
 char_to_upper(16#00E6) -> 16#00C6; %LATIN SMALL LETTER AE 
-char_to_upper(16#00E7) -> 16#00C7; %LATIN SMALL LETTER C WITH CEDILLA 
-char_to_upper(16#00E8) -> 16#00C8; %LATIN SMALL LETTER E WITH GRAVE 
-char_to_upper(16#00E9) -> 16#00C9; %LATIN SMALL LETTER E WITH ACUTE 
 char_to_upper(16#00EA) -> 16#00CA; %LATIN SMALL LETTER E WITH CIRCUMFLEX 
-char_to_upper(16#00EB) -> 16#00CB; %LATIN SMALL LETTER E WITH DIAERESIS 
 char_to_upper(16#00EC) -> 16#00CC; %LATIN SMALL LETTER I WITH GRAVE 
-char_to_upper(16#00ED) -> 16#00CD; %LATIN SMALL LETTER I WITH ACUTE 
 char_to_upper(16#00EE) -> 16#00CE; %LATIN SMALL LETTER I WITH CIRCUMFLEX 
 char_to_upper(16#00EF) -> 16#00CF; %LATIN SMALL LETTER I WITH DIAERESIS 
 char_to_upper(16#00F0) -> 16#00D0; %LATIN SMALL LETTER ETH 
 char_to_upper(16#00F1) -> 16#00D1; %LATIN SMALL LETTER N WITH TILDE 
 char_to_upper(16#00F2) -> 16#00D2; %LATIN SMALL LETTER O WITH GRAVE 
-char_to_upper(16#00F3) -> 16#00D3; %LATIN SMALL LETTER O WITH ACUTE 
 char_to_upper(16#00F4) -> 16#00D4; %LATIN SMALL LETTER O WITH CIRCUMFLEX 
 char_to_upper(16#00F5) -> 16#00D5; %LATIN SMALL LETTER O WITH TILDE 
 char_to_upper(16#00F6) -> 16#00D6; %LATIN SMALL LETTER O WITH DIAERESIS 
@@ -52,11 +191,9 @@ char_to_upper(16#00F8) -> 16#00D8; %LATIN SMALL LETTER O WITH STROKE
 char_to_upper(16#00F9) -> 16#00D9; %LATIN SMALL LETTER U WITH GRAVE 
 char_to_upper(16#00FA) -> 16#00DA; %LATIN SMALL LETTER U WITH ACUTE 
 char_to_upper(16#00FB) -> 16#00DB; %LATIN SMALL LETTER U WITH CIRCUMFLEX 
-char_to_upper(16#00FC) -> 16#00DC; %LATIN SMALL LETTER U WITH DIAERESIS 
 char_to_upper(16#00FD) -> 16#00DD; %LATIN SMALL LETTER Y WITH ACUTE 
 char_to_upper(16#00FE) -> 16#00DE; %LATIN SMALL LETTER THORN 
 char_to_upper(16#00FF) -> 16#0178; %LATIN SMALL LETTER Y WITH DIAERESIS 
-char_to_upper(16#0101) -> 16#0100; %LATIN SMALL LETTER A WITH MACRON 
 char_to_upper(16#0103) -> 16#0102; %LATIN SMALL LETTER A WITH BREVE 
 char_to_upper(16#0105) -> 16#0104; %LATIN SMALL LETTER A WITH OGONEK 
 char_to_upper(16#0107) -> 16#0106; %LATIN SMALL LETTER C WITH ACUTE 
@@ -292,45 +429,17 @@ char_to_upper(16#03F2) -> 16#03F9; %GREEK LUNATE SIGMA SYMBOL
 char_to_upper(16#03F5) -> 16#0395; %GREEK LUNATE EPSILON SYMBOL 
 char_to_upper(16#03F8) -> 16#03F7; %GREEK SMALL LETTER SHO 
 char_to_upper(16#03FB) -> 16#03FA; %GREEK SMALL LETTER SAN 
-char_to_upper(16#0430) -> 16#0410; %CYRILLIC SMALL LETTER A 
-char_to_upper(16#0431) -> 16#0411; %CYRILLIC SMALL LETTER BE 
-char_to_upper(16#0432) -> 16#0412; %CYRILLIC SMALL LETTER VE 
-char_to_upper(16#0433) -> 16#0413; %CYRILLIC SMALL LETTER GHE 
-char_to_upper(16#0434) -> 16#0414; %CYRILLIC SMALL LETTER DE 
-char_to_upper(16#0435) -> 16#0415; %CYRILLIC SMALL LETTER IE 
 char_to_upper(16#0436) -> 16#0416; %CYRILLIC SMALL LETTER ZHE 
-char_to_upper(16#0437) -> 16#0417; %CYRILLIC SMALL LETTER ZE 
-char_to_upper(16#0438) -> 16#0418; %CYRILLIC SMALL LETTER I 
-char_to_upper(16#0439) -> 16#0419; %CYRILLIC SMALL LETTER SHORT I 
-char_to_upper(16#043A) -> 16#041A; %CYRILLIC SMALL LETTER KA 
-char_to_upper(16#043B) -> 16#041B; %CYRILLIC SMALL LETTER EL 
-char_to_upper(16#043C) -> 16#041C; %CYRILLIC SMALL LETTER EM 
-char_to_upper(16#043D) -> 16#041D; %CYRILLIC SMALL LETTER EN 
-char_to_upper(16#043E) -> 16#041E; %CYRILLIC SMALL LETTER O 
-char_to_upper(16#043F) -> 16#041F; %CYRILLIC SMALL LETTER PE 
-char_to_upper(16#0440) -> 16#0420; %CYRILLIC SMALL LETTER ER 
-char_to_upper(16#0441) -> 16#0421; %CYRILLIC SMALL LETTER ES 
-char_to_upper(16#0442) -> 16#0422; %CYRILLIC SMALL LETTER TE 
-char_to_upper(16#0443) -> 16#0423; %CYRILLIC SMALL LETTER U 
 char_to_upper(16#0444) -> 16#0424; %CYRILLIC SMALL LETTER EF 
-char_to_upper(16#0445) -> 16#0425; %CYRILLIC SMALL LETTER HA 
-char_to_upper(16#0446) -> 16#0426; %CYRILLIC SMALL LETTER TSE 
-char_to_upper(16#0447) -> 16#0427; %CYRILLIC SMALL LETTER CHE 
-char_to_upper(16#0448) -> 16#0428; %CYRILLIC SMALL LETTER SHA 
 char_to_upper(16#0449) -> 16#0429; %CYRILLIC SMALL LETTER SHCHA 
 char_to_upper(16#044A) -> 16#042A; %CYRILLIC SMALL LETTER HARD SIGN 
-char_to_upper(16#044B) -> 16#042B; %CYRILLIC SMALL LETTER YERU 
-char_to_upper(16#044C) -> 16#042C; %CYRILLIC SMALL LETTER SOFT SIGN 
-char_to_upper(16#044D) -> 16#042D; %CYRILLIC SMALL LETTER E 
 char_to_upper(16#044E) -> 16#042E; %CYRILLIC SMALL LETTER YU 
-char_to_upper(16#044F) -> 16#042F; %CYRILLIC SMALL LETTER YA 
 char_to_upper(16#0450) -> 16#0400; %CYRILLIC SMALL LETTER IE WITH GRAVE 
 char_to_upper(16#0451) -> 16#0401; %CYRILLIC SMALL LETTER IO 
 char_to_upper(16#0452) -> 16#0402; %CYRILLIC SMALL LETTER DJE 
 char_to_upper(16#0453) -> 16#0403; %CYRILLIC SMALL LETTER GJE 
 char_to_upper(16#0454) -> 16#0404; %CYRILLIC SMALL LETTER UKRAINIAN IE 
 char_to_upper(16#0455) -> 16#0405; %CYRILLIC SMALL LETTER DZE 
-char_to_upper(16#0456) -> 16#0406; %CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I 
 char_to_upper(16#0457) -> 16#0407; %CYRILLIC SMALL LETTER YI 
 char_to_upper(16#0458) -> 16#0408; %CYRILLIC SMALL LETTER JE 
 char_to_upper(16#0459) -> 16#0409; %CYRILLIC SMALL LETTER LJE 

@@ -1,29 +1,181 @@
-char_to_lower(16#0041) -> 16#0061; %LATIN CAPITAL LETTER A 
-char_to_lower(16#0042) -> 16#0062; %LATIN CAPITAL LETTER B 
-char_to_lower(16#0043) -> 16#0063; %LATIN CAPITAL LETTER C 
-char_to_lower(16#0044) -> 16#0064; %LATIN CAPITAL LETTER D 
-char_to_lower(16#0045) -> 16#0065; %LATIN CAPITAL LETTER E 
-char_to_lower(16#0046) -> 16#0066; %LATIN CAPITAL LETTER F 
-char_to_lower(16#0047) -> 16#0067; %LATIN CAPITAL LETTER G 
-char_to_lower(16#0048) -> 16#0068; %LATIN CAPITAL LETTER H 
-char_to_lower(16#0049) -> 16#0069; %LATIN CAPITAL LETTER I 
-char_to_lower(16#004A) -> 16#006A; %LATIN CAPITAL LETTER J 
-char_to_lower(16#004B) -> 16#006B; %LATIN CAPITAL LETTER K 
-char_to_lower(16#004C) -> 16#006C; %LATIN CAPITAL LETTER L 
-char_to_lower(16#004D) -> 16#006D; %LATIN CAPITAL LETTER M 
-char_to_lower(16#004E) -> 16#006E; %LATIN CAPITAL LETTER N 
-char_to_lower(16#004F) -> 16#006F; %LATIN CAPITAL LETTER O 
-char_to_lower(16#0050) -> 16#0070; %LATIN CAPITAL LETTER P 
+char_to_lower(16#69) -> 16#69;
+char_to_lower(16#61) -> 16#61;
+char_to_lower(16#65) -> 16#65;
+char_to_lower(16#20) -> 16#20;
+char_to_lower(16#74) -> 16#74;
+char_to_lower(16#22) -> 16#22;
+char_to_lower(16#25) -> 16#25;
+char_to_lower(16#2f) -> 16#2f;
+char_to_lower(16#6c) -> 16#6c;
+char_to_lower(16#72) -> 16#72;
+char_to_lower(16#73) -> 16#73;
+char_to_lower(16#3e) -> 16#3e;
+char_to_lower(16#3c) -> 16#3c;
+char_to_lower(16#6f) -> 16#6f;
+char_to_lower(16#6e) -> 16#6e;
+char_to_lower(16#64) -> 16#64;
+char_to_lower(16#70) -> 16#70;
+char_to_lower(16#3d) -> 16#3d;
+char_to_lower(16#30) -> 16#30;
+char_to_lower(16#68) -> 16#68;
+char_to_lower(16#9) -> 16#9;
+char_to_lower(16#63) -> 16#63;
+char_to_lower(16#6b) -> 16#6b;
+char_to_lower(16#67) -> 16#67;
+char_to_lower(16#77) -> 16#77;
+char_to_lower(16#3a) -> 16#3a;
+char_to_lower(16#6d) -> 16#6d;
+char_to_lower(16#2d) -> 16#2d;
+char_to_lower(16#2e) -> 16#2e;
+char_to_lower(16#66) -> 16#66;
+char_to_lower(16#44) -> 16#64;
+char_to_lower(16#a) -> 16#a;
+char_to_lower(16#42) -> 16#62;
+char_to_lower(16#41) -> 16#61;
+char_to_lower(16#75) -> 16#75;
+char_to_lower(16#45) -> 16#65;
+char_to_lower(16#38) -> 16#38;
+char_to_lower(16#31) -> 16#31;
+char_to_lower(16#62) -> 16#62;
+char_to_lower(16#76) -> 16#76;
+char_to_lower(16#3b) -> 16#3b;
+char_to_lower(16#79) -> 16#79;
+char_to_lower(16#78) -> 16#78;
+char_to_lower(16#39) -> 16#39;
+char_to_lower(16#35) -> 16#35;
+char_to_lower(16#34) -> 16#34;
+char_to_lower(16#43) -> 16#63;
+char_to_lower(16#32) -> 16#32;
+char_to_lower(16#33) -> 16#33;
+char_to_lower(16#5f) -> 16#5f;
+char_to_lower(16#36) -> 16#36;
+char_to_lower(16#46) -> 16#66;
+char_to_lower(16#2c) -> 16#2c;
+char_to_lower(16#37) -> 16#37;
+char_to_lower(16#26) -> 16#26;
+char_to_lower(16#430) -> 16#430;
+char_to_lower(16#23) -> 16#23;
+char_to_lower(16#57) -> 16#77;
+char_to_lower(16#50) -> 16#70;
+char_to_lower(16#7a) -> 16#7a;
+char_to_lower(16#6a) -> 16#6a;
+char_to_lower(16#53) -> 16#73;
+char_to_lower(16#4e) -> 16#6e;
+char_to_lower(16#438) -> 16#438;
+char_to_lower(16#21) -> 16#21;
+char_to_lower(16#29) -> 16#29;
+char_to_lower(16#28) -> 16#28;
+char_to_lower(16#43e) -> 16#43e;
+char_to_lower(16#54) -> 16#74;
+char_to_lower(16#440) -> 16#440;
+char_to_lower(16#442) -> 16#442;
+char_to_lower(16#43d) -> 16#43d;
+char_to_lower(16#4d) -> 16#6d;
+char_to_lower(16#435) -> 16#435;
+char_to_lower(16#4c) -> 16#6c;
+char_to_lower(16#441) -> 16#441;
+char_to_lower(16#43a) -> 16#43a;
+char_to_lower(16#49) -> 16#69;
+char_to_lower(16#43b) -> 16#43b;
+char_to_lower(16#48) -> 16#68;
+char_to_lower(16#627) -> 16#627;
+char_to_lower(16#4b) -> 16#6b;
+char_to_lower(16#b7) -> 16#b7;
+char_to_lower(16#3f) -> 16#3f;
+char_to_lower(16#47) -> 16#67;
+char_to_lower(16#52) -> 16#72;
+char_to_lower(16#94d) -> 16#94d;
+char_to_lower(16#71) -> 16#71;
+char_to_lower(16#93e) -> 16#93e;
+char_to_lower(16#27) -> 16#27;
+char_to_lower(16#56) -> 16#76;
+char_to_lower(16#434) -> 16#434;
+char_to_lower(16#443) -> 16#443;
+char_to_lower(16#2022) -> 16#2022;
+char_to_lower(16#6cc) -> 16#6cc;
+char_to_lower(16#5b) -> 16#5b;
+char_to_lower(16#5d) -> 16#5d;
+char_to_lower(16#93f) -> 16#93f;
+char_to_lower(16#44b) -> 16#44b;
+char_to_lower(16#43c) -> 16#43c;
+char_to_lower(16#55) -> 16#75;
+char_to_lower(16#432) -> 16#432;
+char_to_lower(16#631) -> 16#631;
+char_to_lower(16#648) -> 16#648;
+char_to_lower(16#4f) -> 16#6f;
+char_to_lower(16#646) -> 16#646;
+char_to_lower(16#433) -> 16#433;
+char_to_lower(16#930) -> 16#930;
+char_to_lower(16#e9) -> 16#e9;
+char_to_lower(16#43f) -> 16#43f;
+char_to_lower(16#44f) -> 16#44f;
+char_to_lower(16#5c) -> 16#5c;
+char_to_lower(16#e1) -> 16#e1;
+char_to_lower(16#644) -> 16#644;
+char_to_lower(16#935) -> 16#935;
+char_to_lower(16#928) -> 16#928;
+char_to_lower(16#456) -> 16#456;
+char_to_lower(16#915) -> 16#915;
+char_to_lower(16#645) -> 16#645;
+char_to_lower(16#62a) -> 16#62a;
+char_to_lower(16#ed) -> 16#ed;
+char_to_lower(16#439) -> 16#439;
+char_to_lower(16#924) -> 16#924;
+char_to_lower(16#938) -> 16#938;
+char_to_lower(16#7d) -> 16#7d;
+char_to_lower(16#7b) -> 16#7b;
+char_to_lower(16#44c) -> 16#44c;
+char_to_lower(16#62f) -> 16#62f;
+char_to_lower(16#947) -> 16#947;
+char_to_lower(16#647) -> 16#647;
+char_to_lower(16#437) -> 16#437;
+char_to_lower(16#431) -> 16#431;
+char_to_lower(16#9be) -> 16#9be;
+char_to_lower(16#92a) -> 16#92a;
+char_to_lower(16#445) -> 16#445;
+char_to_lower(16#940) -> 16#940;
+char_to_lower(16#d4d) -> 16#d4d;
+char_to_lower(16#92f) -> 16#92f;
+char_to_lower(16#64a) -> 16#64a;
+char_to_lower(16#628) -> 16#628;
+char_to_lower(16#e8) -> 16#e8;
+char_to_lower(16#633) -> 16#633;
+char_to_lower(16#448) -> 16#448;
+char_to_lower(16#fc) -> 16#fc;
+char_to_lower(16#4a) -> 16#6a;
+char_to_lower(16#bcd) -> 16#bcd;
+char_to_lower(16#92e) -> 16#92e;
+char_to_lower(16#446) -> 16#446;
+char_to_lower(16#2a) -> 16#2a;
+char_to_lower(16#e0) -> 16#e0;
+char_to_lower(16#9bf) -> 16#9bf;
+char_to_lower(16#6a9) -> 16#6a9;
+char_to_lower(16#e4) -> 16#e4;
+char_to_lower(16#412) -> 16#432;
+char_to_lower(16#f3) -> 16#f3;
+char_to_lower(16#41a) -> 16#43a;
+char_to_lower(16#6d5) -> 16#6d5;
+char_to_lower(16#44d) -> 16#44d;
+char_to_lower(16#5a) -> 16#7a;
+char_to_lower(16#10d8) -> 16#10d8;
+char_to_lower(16#649) -> 16#649;
+char_to_lower(16#9b0) -> 16#9b0;
+char_to_lower(16#447) -> 16#447;
+char_to_lower(16#e7) -> 16#e7;
+char_to_lower(16#932) -> 16#932;
+char_to_lower(16#10d0) -> 16#10d0;
+char_to_lower(16#2013) -> 16#2013;
+char_to_lower(16#902) -> 16#902;
+char_to_lower(16#9cd) -> 16#9cd;
+char_to_lower(16#eb) -> 16#eb;
+char_to_lower(16#421) -> 16#441;
+char_to_lower(16#101) -> 16#101;
+char_to_lower(16#d3f) -> 16#d3f;
+char_to_lower(16#641) -> 16#641;
+char_to_lower(16#e2) -> 16#e2;
 char_to_lower(16#0051) -> 16#0071; %LATIN CAPITAL LETTER Q 
-char_to_lower(16#0052) -> 16#0072; %LATIN CAPITAL LETTER R 
-char_to_lower(16#0053) -> 16#0073; %LATIN CAPITAL LETTER S 
-char_to_lower(16#0054) -> 16#0074; %LATIN CAPITAL LETTER T 
-char_to_lower(16#0055) -> 16#0075; %LATIN CAPITAL LETTER U 
-char_to_lower(16#0056) -> 16#0076; %LATIN CAPITAL LETTER V 
-char_to_lower(16#0057) -> 16#0077; %LATIN CAPITAL LETTER W 
 char_to_lower(16#0058) -> 16#0078; %LATIN CAPITAL LETTER X 
 char_to_lower(16#0059) -> 16#0079; %LATIN CAPITAL LETTER Y 
-char_to_lower(16#005A) -> 16#007A; %LATIN CAPITAL LETTER Z 
 char_to_lower(16#00C0) -> 16#00E0; %LATIN CAPITAL LETTER A WITH GRAVE 
 char_to_lower(16#00C1) -> 16#00E1; %LATIN CAPITAL LETTER A WITH ACUTE 
 char_to_lower(16#00C2) -> 16#00E2; %LATIN CAPITAL LETTER A WITH CIRCUMFLEX 
@@ -294,7 +446,6 @@ char_to_lower(16#040E) -> 16#045E; %CYRILLIC CAPITAL LETTER SHORT U
 char_to_lower(16#040F) -> 16#045F; %CYRILLIC CAPITAL LETTER DZHE 
 char_to_lower(16#0410) -> 16#0430; %CYRILLIC CAPITAL LETTER A 
 char_to_lower(16#0411) -> 16#0431; %CYRILLIC CAPITAL LETTER BE 
-char_to_lower(16#0412) -> 16#0432; %CYRILLIC CAPITAL LETTER VE 
 char_to_lower(16#0413) -> 16#0433; %CYRILLIC CAPITAL LETTER GHE 
 char_to_lower(16#0414) -> 16#0434; %CYRILLIC CAPITAL LETTER DE 
 char_to_lower(16#0415) -> 16#0435; %CYRILLIC CAPITAL LETTER IE 
@@ -302,14 +453,12 @@ char_to_lower(16#0416) -> 16#0436; %CYRILLIC CAPITAL LETTER ZHE
 char_to_lower(16#0417) -> 16#0437; %CYRILLIC CAPITAL LETTER ZE 
 char_to_lower(16#0418) -> 16#0438; %CYRILLIC CAPITAL LETTER I 
 char_to_lower(16#0419) -> 16#0439; %CYRILLIC CAPITAL LETTER SHORT I 
-char_to_lower(16#041A) -> 16#043A; %CYRILLIC CAPITAL LETTER KA 
 char_to_lower(16#041B) -> 16#043B; %CYRILLIC CAPITAL LETTER EL 
 char_to_lower(16#041C) -> 16#043C; %CYRILLIC CAPITAL LETTER EM 
 char_to_lower(16#041D) -> 16#043D; %CYRILLIC CAPITAL LETTER EN 
 char_to_lower(16#041E) -> 16#043E; %CYRILLIC CAPITAL LETTER O 
 char_to_lower(16#041F) -> 16#043F; %CYRILLIC CAPITAL LETTER PE 
 char_to_lower(16#0420) -> 16#0440; %CYRILLIC CAPITAL LETTER ER 
-char_to_lower(16#0421) -> 16#0441; %CYRILLIC CAPITAL LETTER ES 
 char_to_lower(16#0422) -> 16#0442; %CYRILLIC CAPITAL LETTER TE 
 char_to_lower(16#0423) -> 16#0443; %CYRILLIC CAPITAL LETTER U 
 char_to_lower(16#0424) -> 16#0444; %CYRILLIC CAPITAL LETTER EF 

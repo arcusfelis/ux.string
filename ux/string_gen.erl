@@ -27,6 +27,11 @@ write({CharToLowerFd, CharToUpperFd, IsLowerFd, IsUpperFd, CharTypeFd} = Fds) ->
 	end.
 	
 gen() -> 
+TopChars = lists:sort(fun(X1,X2) -> ux.string:freq_dict(X1)>ux.string:freq_dict(X2) end, 
+			lists:filter(fun(X) -> ux.string:freq_dict(X)>0.0001 end, 
+					lists:seq(1,65353, 1))),
+
+
 	{ok, InFd} = file:open(?UCDATA, [read, raw]),
 	{ok, UpperOutFd} = file:open(?UC_UC_OUT, [write]),
 	{ok, LowerOutFd} = file:open(?UC_LC_OUT, [write]),
@@ -34,16 +39,28 @@ gen() ->
 	{ok, IsLowerOutFd} = file:open(?UC_IL_OUT, [write]),
 	{ok, CharTypeOutFd} = file:open(?UC_CT_OUT, [write]),
 	Pid = spawn(?MODULE, write, [{LowerOutFd, UpperOutFd, IsLowerOutFd, IsUpperOutFd, CharTypeOutFd}]),
-	do_gen(InFd, Pid),
+	do_gen_head(Pid, TopChars),
+	do_gen(InFd, Pid, TopChars),
 	Pid ! {char_to_upper, "char_to_upper(C) -> C.", []},
 	Pid ! {is_upper, "is_upper(_) -> false.", []},
 	Pid ! {is_lower, "is_lower(_) -> false.", []},
 	Pid ! {char_to_lower, "char_to_lower(C) -> C.", []},
 	Pid ! {char_type, "char_type(_) -> other.", []}.
-do_gen(InFd, Pid) ->
+
+do_gen_head(_, []) -> ok;
+do_gen_head(Pid, [H|T]) ->
+        Pid ! {char_to_upper, "char_to_upper(16#~.16b) -> 16#~.16b;~n", [H, ux.string:char_to_upper(H)]},
+        Pid ! {char_to_lower, "char_to_lower(16#~.16b) -> 16#~.16b;~n", [H, ux.string:char_to_lower(H)]},
+        Pid ! {is_upper, "is_upper(16#~.16b) -> ~w;~n", [H, ux.string:is_upper(H)]},
+        Pid ! {is_lower, "is_lower(16#~.16b) -> ~w;~n", [H, ux.string:is_lower(H)]},
+        Pid ! {char_type, "char_type(16#~.16b) -> ~w;~n", [H, ux.string:char_type(H)]},
+
+	do_gen_head(Pid, T).
+
+do_gen(InFd, Pid, TopChars) ->
 	case file:read_line(InFd) of
 		{ok, []} ->
-			do_gen(InFd, Pid);
+			do_gen(InFd, Pid, TopChars);
 		{ok, Data} ->
 			Tokens = ux.string:explode(";", Data)++[""],
 			Code = lists:nth(1, Tokens),
@@ -51,6 +68,11 @@ do_gen(InFd, Pid) ->
 			Lowercase = lists:nth(14, Tokens),
 			Comment = lists:nth(2, Tokens),
 			Abbr = lists:nth(3, Tokens),
+
+	{ok, [Int], []} = io_lib:fread("~16u", Code),
+	case ux.string:in_array(Int, TopChars) of
+		true -> ok;
+		false -> 
 			case Abbr of
 				"Lu" ->
 					case Lowercase of
@@ -80,8 +102,9 @@ do_gen(InFd, Pid) ->
 				{_,  _} -> Pid ! {char_type,
 						"char_type(16#~s) -> ~s; ~n", 
 						[Code, string:to_lower(Abbr)]}
-			end,
-			do_gen(InFd, Pid);
+			end
+		end,
+			do_gen(InFd, Pid, TopChars);
 		eof ->
 			ok
 	end.

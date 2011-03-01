@@ -34,7 +34,7 @@
 -export([is_lower/1, is_upper/1]).
 -export([is_letter/1, is_number/1, is_decimal/1, is_separator/1, is_pm/1, is_punctuation_mark/1]).
 
--export([freq/1]).
+-export([freq/1, freq_dict/1]).
 
 %% @doc Returns various "character types" which can be used 
 %% as a default categorization in implementations.
@@ -61,6 +61,9 @@
 -spec char_type(C::char()) -> atom().
 %char_type(_) -> other.
 char_types(Str)	-> lists:map({ux.string, char_type}, Str).
+
+-include("string/freq_dict.hrl").
+%freq_dict(_) -> 0.
 
 %% @doc Returns true, if C is a letter.
 -spec is_letter(C::char()) -> boolean().
