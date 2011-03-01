@@ -90,3 +90,22 @@ tags_to_list_test_() ->
 	,?_assertEqual(M:F("<b><span>"), ["span", "b"])
 	,?_assertEqual(M:F("<i>"), ["i"])
 	].
+delete_types_test_() ->
+	M = 'ux.string',
+	F = 'delete_types',
+	[?_assertEqual(M:F([ll, lu], "Tom Cat!"), " !")
+	,?_assertEqual(M:F([ll],     "Tom Cat!"), "T C!")
+	,?_assertEqual(M:F([po],     "Tom Cat!"), "Tom Cat")
+	].
+filter_types_test_() ->
+	M = 'ux.string',
+	F = 'filter_types',
+	[?_assertEqual(M:F([ll, lu], "Tom Cat!"), "TomCat")
+	,?_assertEqual(M:F([ll],     "Tom Cat!"), "omat")
+	,?_assertEqual(M:F([po],     "Tom Cat!"), "!")
+	].
+char_types_test_() ->
+	M = 'ux.string',
+	F = 'char_types',
+	[?_assertEqual(M:F("Tom Cat!"), [lu,ll,ll,zs,lu,ll,ll,po])
+	].
