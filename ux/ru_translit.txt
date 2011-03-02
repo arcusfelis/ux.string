@@ -1,0 +1,34 @@
+ГОСТ 16876-71	СЭВ 1362-78	МВД РФ original	LC	BGN	BSI
+A	A	A	А	A	A	A
+B	B	B	Б	B	B	B
+V	V	V	В	V	V	V
+G	G	G	Г	G	G	G
+D	D	D	Д	D	D	D
+E	E	E	Е	E	E, YE	E
+JO	JO	YE,E,YO	Ё	E	E, YE	E
+ZH	ZH	ZH	Ж	ZH	ZH	ZH
+Z	Z	Z	З	Z	Z	Z
+I	I	I, YI	И	I	I	I
+JJ	J	Y	Й	I	Y	I
+K	K	K	К	K	K	K
+L	L	L	Л	L	L	L
+M	M	M	М	M	M	M
+N	N	N	Н	N	N	N
+O	O	O	О	O	O	O
+P	P	P	П	P	P	P
+R	R	R	Р	R	R	R
+S	S	S	С	S	S	S
+T	T	T	Т	T	T	T
+U	U	U	У	U	U	U
+F	F	F	Ф	F	F	F
+KH	KH	KH	Х	KH	KH	KH
+C	C	TS	Ц	TS	TS	TS
+CH	CH	CH	Ч	CH	CH	CH
+SH	SH	SH	Ш	SH	SH	SH
+SHH	SHH	SHCH	Щ	SHCH	SHCH	SHCH
+"	"	'	Ъ	"	"	"
+Y	Y	Y	Ы	Y	Y	Y
+'	'	'	Ь	'	'	'
+EH	EH	E	Э	E	E	E
+JU	JU	YU	Ю	IU	YU	YU
+JA	JA	YA	Я	IA	YA	YA

@@ -152,6 +152,9 @@ explode_types_cycle(Types, [Char|Str], Buf, Res) ->
 split_types(Types, Str) -> delete_empty(explode_types(Types, Str)).
 
 %% @doc Deletes all empty lists from List.
+%% Example:
+%% delete_empty([ [], "test", [1] ]) -> ["test", [1]].
+%% @end
 -spec delete_empty([T]) -> [T].
 
 delete_empty([])        -> [];
