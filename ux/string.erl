@@ -23,7 +23,8 @@
 -export([st/3, strip_tags/3]).
 -export([in_array/2]).
 -export([to_string/1]).
--export([delete_types/2, filter_types/2, explode_types/2, split_types/2]).
+-export([delete_types/2, delete_types/3, filter_types/2, filter_types/3, explode_types/2, split_types/2]).
+-export([first_types/3, last_types/3]).
 
 % for tests
 -export([tags_to_list/1]).
@@ -42,6 +43,14 @@
 %% http://www.ksu.ru/eng/departments/ktk/test/perl/lib/unicode/UCDFF301.html#General%20Category
 %% @end
 -export([char_type/1, char_types/1]).
+
+-define(ASSERT(TEST,TRUE,FALSE), case TEST of true -> TRUE; false -> FALSE
+end).
+
+-define(ASSERT_IN_ARRAY_LAMBDA(TEST), case TEST of true -> fun in_array/2; 
+	false -> fun(X,Y) -> not ux.string:in_array(X,Y) end 
+end).
+
 -include("string/char_to_upper.hrl").
 %char_to_upper(C) -> C.
 -include("string/char_to_lower.hrl").
@@ -117,6 +126,18 @@ delete_types(Types, Str) ->
 		not ux.string:in_array(ux.string:char_type(El), Types) 
 	end, Str).
 
+%% @doc Stops delete_type/2 after Limit deleted chars. If Limit < 0, then
+%% stops after -Limit skipped chars.
+%% @end
+-spec delete_types([atom()], string()i, integer()) -> string().
+
+delete_types(Types, Str, Limit) when Limit > 0 ->
+	lists:reverse(get_types(Types, Str, Limit, [], true, 
+				fun(X,Y) -> not in_array(X,Y) end, 0, -1));
+delete_types(Types, Str, Limit) when Limit < 0 ->
+	lists:reverse(get_types(Types, Str, Limit, [], true, 
+				fun(X,Y) -> not in_array(X,Y) end, 1,  0)).
+
 %% @doc Returns a new string which is made from the chars of Str 
 %% which are a type from Types list.
 % @end
@@ -126,6 +147,52 @@ filter_types(Types, Str) ->
 	lists:filter(fun(El) -> 
 		ux.string:in_array(ux.string:char_type(El), Types) 
 	end, Str).
+
+%% @doc Stops filter_type/2 after Limit extracted chars. If Limit < 0, then
+%% stops after -Limit skipped chars.
+%% @end
+-spec filter_types([atom()], string(), integer()) -> string().
+
+filter_types(Types, Str, Limit) when Limit > 0 ->
+	lists:reverse(get_types(Types, Str, Limit, [], true, 
+					fun in_array/2, -1, 0));
+filter_types(Types, Str, Limit) when Limit < 0 ->
+	lists:reverse(get_types(Types, Str, Limit, [], true, 
+					fun in_array/2,  0, 1)).
+
+%% @doc If Len>0, then gets first Len chars of type, which is in Types
+%% If Len<0, then gets first -Len chars of type, which is NOT in Types
+%% @end
+-spec first_types([atom()], string(), integer()) -> string().
+first_types(Types, Str, Len) -> 
+	lists:reverse(get_types(Types, Str, Len, [], false, 
+		?ASSERT_IN_ARRAY_LAMBDA(Len>0), ?ASSERT(Len>0, -1, 1), 0)).
+
+%% @doc If Len>0, then gets last Len chars of type, which is in Types
+%% If Len<0, then gets last -Len chars of type, which is NOT in Types
+%% @end
+-spec last_types([atom()], string(), integer()) -> string().
+last_types(Types, Str, Len) -> 
+	get_types(Types, lists:reverse(Str), Len, [], false, 
+		?ASSERT_IN_ARRAY_LAMBDA(Len>0), ?ASSERT(Len>0, -1, 1), 0).
+	
+get_types(_, [], _, Result, _, _, _, _) -> Result;
+get_types(_,  _, 0, Result, false, _, _, _) -> Result;
+get_types(_,  Tail, 0, Result, true, _, _, _) -> 
+	lists:reverse(Tail)++Result;
+get_types(Types, [Char|Tail], 
+	Len, % Strop after Len chars
+	Result, % Result array
+	RetTail, % Concat tail with Result or not
+	Fun, % Check function
+	TrueStep, % Len+TrueStep, if Fun return true
+	FalseStep) -> 
+	case apply(Fun, [char_type(Char), Types]) of
+		true  -> get_types(Types, Tail, Len+TrueStep, [Char|Result], 
+					RetTail, Fun, TrueStep, FalseStep);
+		false -> get_types(Types, Tail, Len+FalseStep, Result, 
+					RetTail, Fun, TrueStep, FalseStep)
+	end.
 
 %% @doc Returns a new list of strings which are parts of Str splited 
 %% by separator chars of a type from Types list.
