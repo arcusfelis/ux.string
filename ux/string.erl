@@ -36,6 +36,8 @@
 -export([is_letter/1, is_number/1, is_decimal/1, is_separator/1, is_pm/1, is_punctuation_mark/1]).
 
 -export([freq/1, freq_dict/1]).
+-export([ccc/1]).
+-export([is_nfc/1, is_nfd/1, is_nfkc/1, is_nfkd/1]).
 
 %% @doc Returns various "character types" which can be used 
 %% as a default categorization in implementations.
@@ -44,11 +46,14 @@
 %% @end
 -export([char_type/1, char_types/1]).
 
--define(ASSERT(TEST,TRUE,FALSE), case TEST of true -> TRUE; false -> FALSE
+-define(ASSERT(TEST,TRUE,FALSE), case TEST of 
+	true -> TRUE; 
+	false -> FALSE
 end).
 
--define(ASSERT_IN_ARRAY_LAMBDA(TEST), case TEST of true -> fun in_array/2; 
-	false -> fun(X,Y) -> not ux.string:in_array(X,Y) end 
+-define(ASSERT_IN_ARRAY_LAMBDA(TEST), case TEST of 
+	true -> fun in_array/2; 
+	false -> fun not_in_array/2
 end).
 
 -include("string/char_to_upper.hrl").
@@ -69,9 +74,17 @@ end).
 %% @doc Returns a char type.
 -spec char_type(C::char()) -> atom().
 %char_type(_) -> other.
-char_types(Str)	-> lists:map({ux.string, char_type}, Str).
+char_types(Str)	-> lists:map({?MODULE, char_type}, Str).
 
 -include("string/freq_dict.hrl").
+-include("string/ccc.hrl").
+
+%% From http://www.unicode.org/Public/UNIDATA/DerivedNormalizationProps.txt
+-include("string/nfc_qc.hrl").
+-include("string/nfd_qc.hrl").
+-include("string/nfkc_qc.hrl").
+-include("string/nfkd_qc.hrl").
+
 %freq_dict(_) -> 0.
 
 %% @doc Returns true, if C is a letter.
@@ -123,20 +136,20 @@ is_decimal(C) -> char_type(C) == nd.
 
 delete_types(Types, Str) -> 
 	lists:filter(fun(El) -> 
-		not ux.string:in_array(ux.string:char_type(El), Types) 
+		not in_array(char_type(El), Types) 
 	end, Str).
 
 %% @doc Stops delete_type/2 after Limit deleted chars. If Limit < 0, then
 %% stops after -Limit skipped chars.
 %% @end
--spec delete_types([atom()], string()i, integer()) -> string().
+-spec delete_types([atom()], string(), integer()) -> string().
 
 delete_types(Types, Str, Limit) when Limit > 0 ->
 	lists:reverse(get_types(Types, Str, Limit, [], true, 
-				fun(X,Y) -> not in_array(X,Y) end, 0, -1));
+				fun not_in_array/2, 0, -1));
 delete_types(Types, Str, Limit) when Limit < 0 ->
 	lists:reverse(get_types(Types, Str, Limit, [], true, 
-				fun(X,Y) -> not in_array(X,Y) end, 1,  0)).
+				fun not_in_array/2, 1,  0)).
 
 %% @doc Returns a new string which is made from the chars of Str 
 %% which are a type from Types list.
@@ -145,7 +158,7 @@ delete_types(Types, Str, Limit) when Limit < 0 ->
 
 filter_types(Types, Str) -> 
 	lists:filter(fun(El) -> 
-		ux.string:in_array(ux.string:char_type(El), Types) 
+		in_array(char_type(El), Types) 
 	end, Str).
 
 %% @doc Stops filter_type/2 after Limit extracted chars. If Limit < 0, then
@@ -366,7 +379,7 @@ st(Str, Allowed, Sub) ->
 	st_cycle_with_allowed_tags(Str, [], string:to_lower(Str), 
 			lists:map({lists, reverse},
 			lists:map({string, to_lower},
-			lists:map({'ux.string', to_string}, Allowed))), 
+			lists:map({?MODULE, to_string}, Allowed))), 
 			lists:reverse(Sub)).
 
 %% @doc Drops all tags from the string.
@@ -449,6 +462,8 @@ st_get_tag_end([Head|Tail], [LowerHead|LowerTail], Buf, Tag, true, Cnt) ->
 st_get_tag_end([Head|Tail], [_|LowerTail], Buf, Tag, false, Cnt) ->
 	st_get_tag_end(Tail, LowerTail, [Head|Buf], Tag, false, Cnt).
 
+not_in_array(X,Y) -> not in_array(X,Y).
+
 %% @doc Returns true, if the first argument in the second argument.
 in_array(_, []) -> false;
 in_array(Value, [Head|_]) when (Value == Head) -> true;
@@ -461,3 +476,22 @@ freq(Str) -> freq_1(Str, dict:new()).
 
 freq_1([], Dict)         -> Dict;
 freq_1([Char|Str], Dict) -> freq_1(Str, dict:update_counter(Char, 1, Dict)).
+
+
+%% NORMALIZATION
+%% http://unicode.org/reports/tr15/
+is_nf([], _, Result, _) -> Result;
+is_nf([Head|Tail], LastCC, Result, CheckFun) -> 
+    case ccc(Head) of
+        CC when (LastCC>CC) and not (CC==0) -> no;
+        CC ->   case apply(CheckFun, [Head]) of
+                    n -> no;
+                    m -> is_nf(Tail, CC, maybe,  CheckFun);
+                    y -> is_nf(Tail, CC, Result, CheckFun)
+                end
+    end.
+
+is_nfc(Str)  -> is_nf(Str, 0, yes, fun nfc_qc/1).
+is_nfd(Str)  -> is_nf(Str, 0, yes, fun nfd_qc/1).
+is_nfkc(Str) -> is_nf(Str, 0, yes, fun nfkc_qc/1).
+is_nfkd(Str) -> is_nf(Str, 0, yes, fun nfkd_qc/1).
