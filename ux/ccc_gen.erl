@@ -1,5 +1,6 @@
 %  Generator for Canonical_Combining_Class (ccc) values
-
+%  Also, this data in UNIDATA
+%  http://www.ksu.ru/eng/departments/ktk/test/perl/lib/unicode/UCDFF301.html#Canonical Combining Classes
 -module(ccc_gen).
 -export([gen/0]).
 -import(ux.string).

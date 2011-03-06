@@ -16,12 +16,12 @@
 -import(lists).
 -import(dict).
 
+-export([get_recursive_decomposition/2]).
 -export([htmlspecialchars/1, hsc/1]). % hsc is short name
 -export([explode/2, explode/3, to_lower/1, to_upper/1]).
 -export([st/1, strip_tags/1]).
 -export([st/2, strip_tags/2]).
 -export([st/3, strip_tags/3]).
--export([in_array/2]).
 -export([to_string/1]).
 -export([delete_types/2, delete_types/3, filter_types/2, filter_types/3, explode_types/2, split_types/2]).
 -export([first_types/3, last_types/3]).
@@ -39,6 +39,8 @@
 -export([ccc/1]).
 -export([is_nfc/1, is_nfd/1, is_nfkc/1, is_nfkd/1]).
 
+-export([is_comp_excl/1]).
+
 %% @doc Returns various "character types" which can be used 
 %% as a default categorization in implementations.
 %% Types:
@@ -52,7 +54,7 @@
 end).
 
 -define(ASSERT_IN_ARRAY_LAMBDA(TEST), case TEST of 
-	true -> fun in_array/2; 
+	true -> fun lists:member/2; 
 	false -> fun not_in_array/2
 end).
 
@@ -84,6 +86,12 @@ char_types(Str)	-> lists:map({?MODULE, char_type}, Str).
 -include("string/nfd_qc.hrl").
 -include("string/nfkc_qc.hrl").
 -include("string/nfkd_qc.hrl").
+
+%% From http://www.unicode.org/Public/UNIDATA/CompositionExclusions.txt
+-include("string/is_comp_excl.hrl").
+-include("string/is_compat.hrl").
+-include("string/decomp.hrl").
+-include("string/comp.hrl").
 
 %freq_dict(_) -> 0.
 
@@ -136,7 +144,7 @@ is_decimal(C) -> char_type(C) == nd.
 
 delete_types(Types, Str) -> 
 	lists:filter(fun(El) -> 
-		not in_array(char_type(El), Types) 
+		not lists:member(char_type(El), Types) 
 	end, Str).
 
 %% @doc Stops delete_type/2 after Limit deleted chars. If Limit < 0, then
@@ -158,7 +166,7 @@ delete_types(Types, Str, Limit) when Limit < 0 ->
 
 filter_types(Types, Str) -> 
 	lists:filter(fun(El) -> 
-		in_array(char_type(El), Types) 
+		lists:member(char_type(El), Types) 
 	end, Str).
 
 %% @doc Stops filter_type/2 after Limit extracted chars. If Limit < 0, then
@@ -168,10 +176,10 @@ filter_types(Types, Str) ->
 
 filter_types(Types, Str, Limit) when Limit > 0 ->
 	lists:reverse(get_types(Types, Str, Limit, [], true, 
-					fun in_array/2, -1, 0));
+					fun lists:member/2, -1, 0));
 filter_types(Types, Str, Limit) when Limit < 0 ->
 	lists:reverse(get_types(Types, Str, Limit, [], true, 
-					fun in_array/2,  0, 1)).
+					fun lists:member/2,  0, 1)).
 
 %% @doc If Len>0, then gets first Len chars of type, which is in Types
 %% If Len<0, then gets first -Len chars of type, which is NOT in Types
@@ -218,7 +226,7 @@ explode_types(Types, Str) ->
 explode_types_cycle(_, [], [], Res) -> Res;
 explode_types_cycle(_, [], Buf, Res) -> [Buf|Res];
 explode_types_cycle(Types, [Char|Str], Buf, Res) -> 
-	case in_array(char_type(Char), Types) of
+	case lists:member(char_type(Char), Types) of
 		true  -> explode_types_cycle(Types, Str, [], [Buf|Res]);
 		false -> explode_types_cycle(Types, Str, [Char|Buf], Res)
 	end.
@@ -400,7 +408,7 @@ st_cycle_with_allowed_tags([], Buf, _, _, _) -> lists:reverse(Buf);
 st_cycle_with_allowed_tags(Str, Buf, LowerStr, Allowed, Sub) ->
 	case st_get_tag(Str, LowerStr) of
 		{Tag, SubStr, Tail, LowerTail} -> 
-			case in_array(Tag, Allowed) of 
+			case lists:member(Tag, Allowed) of 
 				true -> st_cycle_with_allowed_tags(Tail, 
 					lists:append(SubStr, Buf), LowerTail, 
 					Allowed, Sub);
@@ -462,12 +470,7 @@ st_get_tag_end([Head|Tail], [LowerHead|LowerTail], Buf, Tag, true, Cnt) ->
 st_get_tag_end([Head|Tail], [_|LowerTail], Buf, Tag, false, Cnt) ->
 	st_get_tag_end(Tail, LowerTail, [Head|Buf], Tag, false, Cnt).
 
-not_in_array(X,Y) -> not in_array(X,Y).
-
-%% @doc Returns true, if the first argument in the second argument.
-in_array(_, []) -> false;
-in_array(Value, [Head|_]) when (Value == Head) -> true;
-in_array(Value, [_|Tail]) -> in_array(Value, Tail).
+not_in_array(X,Y) -> not lists:member(X,Y).
 
 %% @doc Counts a letter frequency
 -spec freq(string()) -> dict(). 
@@ -491,7 +494,26 @@ is_nf([Head|Tail], LastCC, Result, CheckFun) ->
                 end
     end.
 
+%% Detecting Normalization Forms
+%% http://unicode.org/reports/tr15/#Detecting_Normalization_Forms
 is_nfc(Str)  -> is_nf(Str, 0, yes, fun nfc_qc/1).
 is_nfd(Str)  -> is_nf(Str, 0, yes, fun nfd_qc/1).
 is_nfkc(Str) -> is_nf(Str, 0, yes, fun nfkc_qc/1).
 is_nfkd(Str) -> is_nf(Str, 0, yes, fun nfkd_qc/1).
+
+%internal_decompose(Str)
+get_recursive_decomposition(Canonical, Str) -> 
+    lists:reverse(get_recursive_decomposition(Canonical, Str, [])).
+get_recursive_decomposition(_, [], Result) -> Result;
+get_recursive_decomposition(Canonical, [Char|Tail], Result) ->
+    case decomp(Char) of
+        []  -> get_recursive_decomposition(Canonical, Tail,
+                                            [Char|Result]);
+        Dec -> case Canonical and is_compat(Char) of
+                    true    -> get_recursive_decomposition(Canonical,
+                        Tail,  [Char|Result]);
+                    false   -> get_recursive_decomposition(Canonical,
+                        Tail,  get_recursive_decomposition(Canonical,
+                        Dec, Result))
+               end
+    end.
