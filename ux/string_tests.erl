@@ -1,5 +1,13 @@
 -module(ux.string_tests).
 -include_lib("eunit/include/eunit.hrl").
+-define(NFTESTDATA, "data/NormalizationTest.txt"). 
+-import(file).
+-import(io).
+-import(io_lib).
+-import(unicode).
+-import(lists).
+-import(string).
+-export([to_string/1, parse_int16/1]).
 
 explode_test_() ->
 	M = 'ux.string',
@@ -131,4 +139,91 @@ first_types_test_() ->
 	F = 'first_types',
 	[?_assertEqual(M:F([ll], "AavbfFDsdfffds", 4), "avbf")
 	,?_assertEqual(M:F([ll], "AavbfFDsdfffds", 5), "avbfs")
+	].
+
+%    NFC
+%      c2 ==  NFC(c1) ==  NFC(c2) ==  NFC(c3)
+%      c4 ==  NFC(c4) ==  NFC(c5)
+%
+%    NFD
+%      c3 ==  NFD(c1) ==  NFD(c2) ==  NFD(c3)
+%      c5 ==  NFD(c4) ==  NFD(c5)
+%
+%    NFKC
+%      c4 == NFKC(c1) == NFKC(c2) == NFKC(c3) == NFKC(c4) == NFKC(c5)
+%
+%    NFKD
+%      c5 == NFKD(c1) == NFKD(c2) == NFKD(c3) == NFKD(c4) == NFKD(c5)
+
+nfc_test(_, 0) -> max;
+nfc_test(InFd, Max) ->
+    NFC  = fun 'ux.string':to_nfc/1,
+    NFD  = fun 'ux.string':to_nfd/1,
+    NFKC = fun 'ux.string':to_nfkc/1,
+    NFKD = fun 'ux.string':to_nfkd/1,
+    case file:read_line(InFd) of
+        {ok, []} -> nfc_test(InFd, Max);
+        {ok, Data} -> Str = unicode:characters_to_list(Data, utf8), 
+            case ux.string:explode("#", Data) of
+                [LineWithoutComment|_] ->  
+                    case lists:map(fun ?MODULE:to_string/1, 
+                        ux.string:explode(";", LineWithoutComment)) of
+                         [_,_,_,_,_,_] = Row ->
+                           C1 = lists:nth(1, Row),
+                           C2 = lists:nth(2, Row),
+                           C3 = lists:nth(3, Row),
+                           C4 = lists:nth(4, Row),
+                           C5 = lists:nth(5, Row),
+                           % {Result from function, From, To}
+                           %NFD
+                           ?assertEqual({Max,C3, C1, C3}, {Max,NFD(C1), C1, C3}),
+                           ?assertEqual({C3, C2, C3}, {NFD(C2), C2, C3}),
+                           ?assertEqual({C3, C3, C3}, {NFD(C3), C3, C3}),
+                           ?assertEqual({C5, C4, C5}, {NFD(C4), C4, C5}),
+                           ?assertEqual({C5, C5, C5}, {NFD(C5), C5, C5}),
+                           %NFC
+                           ?assertEqual({C2, C1, C2}, {NFC(C1), C1, C2}),
+                           ?assertEqual({C2, C2, C2}, {NFC(C2), C2, C2}),
+                           ?assertEqual({C2, C3, C2}, {NFC(C3), C3, C2}),
+                           ?assertEqual({C4, C4, C4}, {NFC(C4), C4, C4}),
+                           ?assertEqual({C4, C5, C4}, {NFC(C5), C5, C4}),
+                           %NFKC
+                           ?assertEqual({C4, C1}, {NFKC(C1), C1}),
+                           ?assertEqual({C4, C2}, {NFKC(C2), C2}),
+                           ?assertEqual({C4, C3}, {NFKC(C3), C3}),
+                           ?assertEqual({C4, C4}, {NFKC(C4), C4}),
+                           ?assertEqual({C4, C5}, {NFKC(C5), C5}),
+                           %NFCD
+                           ?assertEqual({C5, C1}, {NFKD(C1), C1}),
+                           ?assertEqual({C5, C2}, {NFKD(C2), C2}),
+                           ?assertEqual({C5, C3}, {NFKD(C3), C3}),
+                           ?assertEqual({C5, C4}, {NFKD(C4), C4}),
+                           ?assertEqual({C5, C5}, {NFKD(C5), C5}),
+                           ok;
+                        _ -> skip
+                   end; 
+                _ -> ok
+            end,
+            nfc_test(InFd, Max - 1);
+        eof -> ok
+    end.
+
+nfc_test_() ->
+        {ok, InFd} = file:open(?NFTESTDATA, [read]),
+                io:setopts(InFd,[{encoding,utf8}]),
+                        {timeout, 600, fun() -> 
+                        nfc_test(InFd, 10000000) end}.
+parse_int16(Code) -> 
+	case io_lib:fread("~16u", Code) of
+        {ok, [Int], []} -> Int;
+        _ -> 0 
+    end.
+
+to_string(Str) -> lists:map(fun parse_int16/1, string:tokens(Str, " ")).
+
+to_string_test_() ->
+	M = ?MODULE,
+	F = 'to_string',
+	[?_assertEqual(M:F("22 6e"), [34,110])
+	%,?_assertEqual(M:F(), )
 	].

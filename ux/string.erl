@@ -15,8 +15,10 @@
 
 -import(lists).
 -import(dict).
+-import(io).
+-import(unicode).
+-import(erlang).
 
--export([get_recursive_decomposition/2]).
 -export([htmlspecialchars/1, hsc/1]). % hsc is short name
 -export([explode/2, explode/3, to_lower/1, to_upper/1]).
 -export([st/1, strip_tags/1]).
@@ -38,8 +40,12 @@
 -export([freq/1, freq_dict/1]).
 -export([ccc/1]).
 -export([is_nfc/1, is_nfd/1, is_nfkc/1, is_nfkd/1]).
+-export([to_nfc/1, to_nfd/1, to_nfkc/1, to_nfkd/1]).
 
 -export([is_comp_excl/1]).
+-export([is_hangul/1]).
+
+-export([comp/1, decomp/1]).
 
 %% @doc Returns various "character types" which can be used 
 %% as a default categorization in implementations.
@@ -57,6 +63,19 @@ end).
 	true -> fun lists:member/2; 
 	false -> fun not_in_array/2
 end).
+
+%% Defines Hangul constants
+-define(HANGUL_SBASE,  16#AC00).
+-define(HANGUL_LBASE,  16#1100).
+-define(HANGUL_VBASE,  16#1161).
+-define(HANGUL_TBASE,  16#11A7).
+-define(HANGUL_LCOUNT, 19).
+-define(HANGUL_VCOUNT, 21).
+-define(HANGUL_TCOUNT, 28).
+-define(HANGUL_NCOUNT, 588).
+-define(HANGUL_SCOUNT, 11172).
+
+
 
 -include("string/char_to_upper.hrl").
 %char_to_upper(C) -> C.
@@ -501,19 +520,219 @@ is_nfd(Str)  -> is_nf(Str, 0, yes, fun nfd_qc/1).
 is_nfkc(Str) -> is_nf(Str, 0, yes, fun nfkc_qc/1).
 is_nfkd(Str) -> is_nf(Str, 0, yes, fun nfkd_qc/1).
 
-%internal_decompose(Str)
+to_nfc(Str)  -> case check_acsii(Str) of
+                    true -> Str;
+                    _    -> get_composition(get_recursive_decomposition(true,  Str))
+                end.
+to_nfkc(Str) -> case check_acsii(Str) of
+                    true -> Str;
+                    _    -> get_composition(get_recursive_decomposition(false, Str))
+                end.
+to_nfd(Str)  -> case check_acsii(Str) of
+                    true -> Str;
+                    _    -> get_recursive_decomposition(true,  Str)
+                end.
+to_nfkd(Str) -> case check_acsii(Str) of
+                    true -> Str;
+                    _    -> get_recursive_decomposition(false, Str)
+                end.
+
+
+is_acsii(Char) when (Char>=0) and (Char=<16#7F) ->
+    true;
+is_acsii(_) ->
+    false.
+
+list_to_latin1(Str) ->
+    erlang:binary_to_list(unicode:characters_to_binary_int(Str, unicode)).
+
+check_acsii(Str) ->
+    check_acsii2(list_to_latin1(Str)).
+
+check_acsii2([]) -> true;
+check_acsii2([Char|Str]) when (Char>=0) and (Char=<16#7F) -> 
+    check_acsii2(Str);
+check_acsii2(_) -> false.
+
+% internal_decompose(Str)
+% Canonical  If true bit is on in this byte, then selects the recursive 
+%            canonical decomposition, otherwise selects
+%            the recursive compatibility and canonical decomposition.
 get_recursive_decomposition(Canonical, Str) -> 
-    lists:reverse(get_recursive_decomposition(Canonical, Str, [])).
+    decomp_sort(
+        lists:reverse(
+            get_recursive_decomposition(Canonical, Str, []))).
 get_recursive_decomposition(_, [], Result) -> Result;
 get_recursive_decomposition(Canonical, [Char|Tail], Result) ->
-    case decomp(Char) of
-        []  -> get_recursive_decomposition(Canonical, Tail,
-                                            [Char|Result]);
-        Dec -> case Canonical and is_compat(Char) of
-                    true    -> get_recursive_decomposition(Canonical,
-                        Tail,  [Char|Result]);
-                    false   -> get_recursive_decomposition(Canonical,
-                        Tail,  get_recursive_decomposition(Canonical,
-                        Dec, Result))
-               end
+    IsHangul = is_hangul_precomposed(Char),
+    if
+      IsHangul ->
+                get_recursive_decomposition(Canonical, Tail,
+                hangul_decomposition(Char, Result));
+      
+      true ->
+        case decomp(Char) of
+            []  -> get_recursive_decomposition(Canonical, Tail,
+                                                [Char|Result]);
+            Dec -> case Canonical and is_compat(Char) of % not is_compat = singleton
+                        true    -> get_recursive_decomposition(Canonical,
+                            Tail,  [Char|Result]);
+                        false   -> get_recursive_decomposition(Canonical,
+                            Tail,  get_recursive_decomposition(Canonical,
+                            Dec, Result))
+                   end
+        end
     end.
+
+decomp_sort(Str) -> decomp_sort2(decomp_sort1(Str, [], []), []).
+
+% First argument is reversed
+decomp_sort1([], [ ], Res) -> Res;
+decomp_sort1([], Buf, Res) -> [Buf|Res];
+decomp_sort1([Char|Tail], Buf, Res) ->
+    case ccc(Char) of
+        0     -> decomp_sort1(Tail, [{0, Char}], [Buf|Res]);
+        Class -> decomp_sort1(Tail, [{Class, Char}|Buf], Res)
+    end.
+
+decomp_sort2([       ], Res) -> Res;
+decomp_sort2([Buf|Str], Res) ->
+    io:format("BUF: ~w", [Buf]),
+    decomp_sort2(Str, decomp_sort3(Buf, Res)).
+
+decomp_sort3(Buf, Res)  -> 
+    case get_comp_char_max(Buf, -1, {}) of 
+        {} -> Res;
+        {_, ModChar} = Value -> 
+        io:format("Val: ~w", [Value]),
+        decomp_sort3(Buf--[Value], [ModChar|Res])
+    end.
+
+%% Searches modificator with minimum class (ccc)
+%% Used by comp_char/2, decomp_sort3/2
+get_comp_char_max([], _, Res) -> Res;
+get_comp_char_max([{ModClass, Mod} = Value|Mods], MaxClass, Res) 
+    when MaxClass<ModClass ->
+    io:format("~w ~w~n", [Value, MaxClass]),
+    get_comp_char_max(Mods, ModClass, Value);
+get_comp_char_max([_|Mods], MaxClass, Res) ->
+    get_comp_char_max(Mods, MaxClass, Res).
+
+%% Searches modificator with minimum class (ccc)
+%% Returns {{Value, ModificatorChar}, TailOfModificators} or {}
+%% Used by comp_char/2, decomp_sort3/2
+%get_comp_char_min([], _, Res) -> Res;
+%get_comp_char_min([{ModClass, Mod} = Value|Mods], MinClass, Res) 
+%    when MinClass>ModClass ->
+%    io:format("~w ~w~n", [Value, MinClass]),
+%    get_comp_char_min(Mods, ModClass, {Value, Mods});
+%get_comp_char_min([_|Mods], MinClass, Res) ->
+%    get_comp_char_min(Mods, MinClass, Res).
+%
+% 
+
+get_composition(Str) -> hangul_composition(lists:reverse(get_composition(Str, []))).
+get_composition([], Result) -> Result;
+get_composition([Char|Tail], Result) ->
+    io:format("GC: ~w~n", [Tail]),
+    case (ccc(Char) == 0) of
+        true -> get_composition(Tail, Char, [], Result);
+        _    -> get_composition(Tail, [Char|Result])                   
+    end.
+
+get_composition([], StartChar, Mods, Result) ->
+    comp_group(StartChar, lists:reverse(Mods), Result);
+
+% Note: Text exclusively containing ASCII characters (U+0000..U+007F) 
+% is left unaffected by all of the Normalization Forms.
+get_composition([{skip, Char}|Tail], StartChar, Mods, Result) -> 
+        get_composition(Tail, [Char|comp_group(
+            StartChar, lists:reverse(Mods), Result)]);
+
+get_composition([Char|Tail], StartChar, Mods, Result) ->
+    case ccc(Char) of
+        0 -> case comp([StartChar, Char]) of
+                false -> get_composition(Tail, Char, [], comp_group(
+                        StartChar, lists:reverse(Mods), Result));
+                Comp  -> get_composition(Tail, Comp, % ccc(0) + ccc(0) 
+                        Mods, Result)
+             end;
+        CharClass -> get_composition(Tail, StartChar,  
+                [Char|Mods], Result)
+    end.
+
+%% Used by get_composition/5
+comp_group(Char, [], Result) -> [Char|Result]; % no any modificators
+comp_group(Char, Mods, Result) ->
+    io:format("~nData: ~w  ~w~n", [Char,Mods]),
+    case comp_group2(Char, Mods) of
+        false -> lists:reverse(Mods) ++ [Char|Result];
+        {Comp, Mod} -> comp_group(Comp, Mods--[Mod], Result)
+    end.
+
+comp_group2(_, []) -> false; % There is no any compositions
+comp_group2(Char, [Mod|Mods]) ->
+    case comp([Char, Mod]) of
+        false -> comp_group2(Char, Mods);
+        Comp  -> {Comp, Mod}
+    end.
+    
+% http://unicode.org/reports/tr15/#Hangul
+is_hangul(Char) when ((Char>=16#1100) and (Char=<16#11FF)) % Hangul Jamo
+                  or ((Char>=16#A960) and (Char=<16#A97C)) % Hangul Jamo Extended-A
+                  or ((Char>=16#D7B0) and (Char=<16#D7C6)) % Hangul Jamo Extended-B
+                  or ((Char>=16#D7CB) and (Char=<16#D7FB)) % Hangul Jamo Extended-B
+                  or ((Char>=16#3131) and (Char=<16#318E)) % Hangul Compatibility Jamo 
+                  or  (Char==16#302E) or  (Char==16#302F)  % Tone marks (used in Middle Korean) 
+                  or ((Char>=16#AC00) and (Char=<16#D7A3)) % 11,172 precomposed Hangul syllables
+                  or ((Char>=16#3200) and (Char=<16#321E)) % For parenthesised 
+                  or ((Char>=16#3260) and (Char=<16#327E)) % and circled 
+                  or ((Char>=16#FFDC) and (Char=<16#FFA0)) % For halfwidth 
+                  -> true;
+is_hangul(_)      -> false.
+
+is_hangul_precomposed(Char) when ((Char>=16#AC00) and (Char=<16#D7A3)) % 11,172 precomposed Hangul syllables
+                         -> true;
+is_hangul_precomposed(_) -> false.
+
+hangul_decomposition(Char, Result) ->
+    SIndex = Char - ?HANGUL_SBASE,
+    case (SIndex < 0) or (SIndex >= ?HANGUL_SCOUNT) of
+        true -> [Char|Result]; % skip
+        false -> 
+            L = ?HANGUL_LBASE + (SIndex div ?HANGUL_NCOUNT),
+            V = ?HANGUL_VBASE + (SIndex rem ?HANGUL_NCOUNT) div ?HANGUL_TCOUNT,
+            T = ?HANGUL_TBASE + (SIndex rem ?HANGUL_TCOUNT),
+            
+            case T of
+                ?HANGUL_TBASE -> [V|[L|Result]];
+                _ -> [T|[V|[L|Result]]]
+            end
+    end.
+
+hangul_composition([]) -> []; 
+hangul_composition([Code|Str]) -> lists:reverse(hangul_composition(Code, Str, [])).
+
+hangul_composition(Code, [], Result) -> [Code|Result];
+hangul_composition(LastChar, [Char|StrTail], Result) ->
+    LIndex = LastChar - ?HANGUL_LBASE,
+    SIndex = LastChar - ?HANGUL_SBASE,
+    VIndex = Char - ?HANGUL_VBASE,
+    TIndex = Char - ?HANGUL_TBASE,
+    io:format("Hangul: ~w~n", [{LIndex, SIndex, VIndex, TIndex}]),
+    if
+    % 2. check to see if two current characters are L and V
+            (0 =< LIndex) and (LIndex < ?HANGUL_LCOUNT) 
+        and (0 =< VIndex) and (VIndex < ?HANGUL_VCOUNT) ->
+                Comp = ?HANGUL_SBASE + (LIndex * ?HANGUL_VCOUNT + VIndex) * ?HANGUL_TCOUNT,
+                hangul_composition(Comp, StrTail, Result); 
+
+     % 1. check to see if two current characters are LV and T
+            (0 =< SIndex) and (SIndex < ?HANGUL_SCOUNT) 
+        and ((SIndex rem ?HANGUL_TCOUNT) == 0)
+        and (0  < TIndex) and (TIndex < ?HANGUL_TCOUNT) ->
+                Comp = LastChar + TIndex,
+                hangul_composition(Comp, StrTail, Result); 
+
+        true -> hangul_composition(Char, StrTail, [LastChar|Result])
+    end. 
