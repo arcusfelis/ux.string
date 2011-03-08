@@ -182,7 +182,7 @@ nfc_test(InFd, Max) ->
                            ?assertEqual({C5, C4, C5}, {NFD(C4), C4, C5}),
                            ?assertEqual({C5, C5, C5}, {NFD(C5), C5, C5}),
                            %NFC
-                           ?assertEqual({C2, C1, C2}, {NFC(C1), C1, C2}),
+                           ?assertEqual({Max, C2, C1, C2}, {Max, NFC(C1), C1, C2}),
                            ?assertEqual({C2, C2, C2}, {NFC(C2), C2, C2}),
                            ?assertEqual({C2, C3, C2}, {NFC(C3), C3, C2}),
                            ?assertEqual({C4, C4, C4}, {NFC(C4), C4, C4}),

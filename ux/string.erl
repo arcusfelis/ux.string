@@ -19,6 +19,8 @@
 -import(unicode).
 -import(erlang).
 
+-export([list_to_latin1/1]).
+-export([char_comment/1]).
 -export([htmlspecialchars/1, hsc/1]). % hsc is short name
 -export([explode/2, explode/3, to_lower/1, to_upper/1]).
 -export([st/1, strip_tags/1]).
@@ -91,6 +93,7 @@ end).
 -spec is_lower(C::char()) -> boolean().
 %is_lower(_) -> false.
 
+-include("string/char_comment.hrl").
 -include("string/char_type.hrl").
 %% @doc Returns a char type.
 -spec char_type(C::char()) -> atom().
@@ -520,22 +523,10 @@ is_nfd(Str)  -> is_nf(Str, 0, yes, fun nfd_qc/1).
 is_nfkc(Str) -> is_nf(Str, 0, yes, fun nfkc_qc/1).
 is_nfkd(Str) -> is_nf(Str, 0, yes, fun nfkd_qc/1).
 
-to_nfc(Str)  -> case check_acsii(Str) of
-                    true -> Str;
-                    _    -> get_composition(get_recursive_decomposition(true,  Str))
-                end.
-to_nfkc(Str) -> case check_acsii(Str) of
-                    true -> Str;
-                    _    -> get_composition(get_recursive_decomposition(false, Str))
-                end.
-to_nfd(Str)  -> case check_acsii(Str) of
-                    true -> Str;
-                    _    -> get_recursive_decomposition(true,  Str)
-                end.
-to_nfkd(Str) -> case check_acsii(Str) of
-                    true -> Str;
-                    _    -> get_recursive_decomposition(false, Str)
-                end.
+to_nfc(Str)  -> get_composition(get_recursive_decomposition(true,  Str)).
+to_nfkc(Str) -> get_composition(get_recursive_decomposition(false, Str)).
+to_nfd(Str)  -> get_recursive_decomposition(true,  Str).
+to_nfkd(Str) -> get_recursive_decomposition(false, Str).
 
 
 is_acsii(Char) when (Char>=0) and (Char=<16#7F) ->
@@ -544,15 +535,23 @@ is_acsii(_) ->
     false.
 
 list_to_latin1(Str) ->
-    erlang:binary_to_list(unicode:characters_to_binary_int(Str, unicode)).
+    lists:reverse(list_to_latin1(Str, [])).
 
-check_acsii(Str) ->
-    check_acsii2(list_to_latin1(Str)).
+list_to_latin1([], Res) -> Res;
+list_to_latin1([Char|Str], Res) ->
+    list_to_latin1(Str, char_to_list(Char, [], Res)).
 
-check_acsii2([]) -> true;
-check_acsii2([Char|Str]) when (Char>=0) and (Char=<16#7F) -> 
-    check_acsii2(Str);
-check_acsii2(_) -> false.
+% magic
+% Char>255
+char_to_list(Char, Buf, Res) ->
+    case Char bsr 8 of
+        0   ->  case Buf of
+                    [] -> [Char|Res];
+                    _  -> lists:reverse(Buf)++[Char|Res]
+                end;
+        Div ->  Rem = Char band 2#11111111,
+                char_to_list(Div, [Rem|Buf], Res)
+    end.
 
 % internal_decompose(Str)
 % Canonical  If true bit is on in this byte, then selects the recursive 
@@ -562,6 +561,7 @@ get_recursive_decomposition(Canonical, Str) ->
     decomp_sort(
         lists:reverse(
             get_recursive_decomposition(Canonical, Str, []))).
+
 get_recursive_decomposition(_, [], Result) -> Result;
 get_recursive_decomposition(Canonical, [Char|Tail], Result) ->
     IsHangul = is_hangul_precomposed(Char),
@@ -597,14 +597,12 @@ decomp_sort1([Char|Tail], Buf, Res) ->
 
 decomp_sort2([       ], Res) -> Res;
 decomp_sort2([Buf|Str], Res) ->
-    io:format("BUF: ~w", [Buf]),
     decomp_sort2(Str, decomp_sort3(Buf, Res)).
 
 decomp_sort3(Buf, Res)  -> 
     case get_comp_char_max(Buf, -1, {}) of 
         {} -> Res;
         {_, ModChar} = Value -> 
-        io:format("Val: ~w", [Value]),
         decomp_sort3(Buf--[Value], [ModChar|Res])
     end.
 
@@ -613,70 +611,35 @@ decomp_sort3(Buf, Res)  ->
 get_comp_char_max([], _, Res) -> Res;
 get_comp_char_max([{ModClass, Mod} = Value|Mods], MaxClass, Res) 
     when MaxClass<ModClass ->
-    io:format("~w ~w~n", [Value, MaxClass]),
     get_comp_char_max(Mods, ModClass, Value);
 get_comp_char_max([_|Mods], MaxClass, Res) ->
     get_comp_char_max(Mods, MaxClass, Res).
 
-%% Searches modificator with minimum class (ccc)
-%% Returns {{Value, ModificatorChar}, TailOfModificators} or {}
-%% Used by comp_char/2, decomp_sort3/2
-%get_comp_char_min([], _, Res) -> Res;
-%get_comp_char_min([{ModClass, Mod} = Value|Mods], MinClass, Res) 
-%    when MinClass>ModClass ->
-%    io:format("~w ~w~n", [Value, MinClass]),
-%    get_comp_char_min(Mods, ModClass, {Value, Mods});
-%get_comp_char_min([_|Mods], MinClass, Res) ->
-%    get_comp_char_min(Mods, MinClass, Res).
-%
-% 
+get_composition([Char|Tail]) -> 
+    CharClass = ccc(Char),
+    hangul_composition(
+        lists:reverse(
+            get_composition(Tail, Char, 
+                case CharClass of
+                    0 -> 0;
+                    _ -> 256
+                end, [], []))).
 
-get_composition(Str) -> hangul_composition(lists:reverse(get_composition(Str, []))).
-get_composition([], Result) -> Result;
-get_composition([Char|Tail], Result) ->
-    io:format("GC: ~w~n", [Tail]),
-    case (ccc(Char) == 0) of
-        true -> get_composition(Tail, Char, [], Result);
-        _    -> get_composition(Tail, [Char|Result])                   
+get_composition([], Char, LastClass, Mods, Result) ->
+    Mods ++ [Char|Result];
+get_composition([Char|Tail], LastChar, LastClass, Mods, Result) ->
+    CharClass = ccc(Char),
+    Comp = comp([LastChar, Char]),
+    if
+        (not (Comp == false)) and
+        ((LastClass < CharClass)
+        or (LastClass == 0)) ->
+            get_composition(Tail, Comp, LastClass, Mods, Result);
+        (CharClass == 0) -> get_composition(Tail, Char, CharClass, [], 
+            Mods ++ [LastChar|Result]);
+        true -> get_composition(Tail, LastChar, CharClass, [Char|Mods], Result)
     end.
 
-get_composition([], StartChar, Mods, Result) ->
-    comp_group(StartChar, lists:reverse(Mods), Result);
-
-% Note: Text exclusively containing ASCII characters (U+0000..U+007F) 
-% is left unaffected by all of the Normalization Forms.
-get_composition([{skip, Char}|Tail], StartChar, Mods, Result) -> 
-        get_composition(Tail, [Char|comp_group(
-            StartChar, lists:reverse(Mods), Result)]);
-
-get_composition([Char|Tail], StartChar, Mods, Result) ->
-    case ccc(Char) of
-        0 -> case comp([StartChar, Char]) of
-                false -> get_composition(Tail, Char, [], comp_group(
-                        StartChar, lists:reverse(Mods), Result));
-                Comp  -> get_composition(Tail, Comp, % ccc(0) + ccc(0) 
-                        Mods, Result)
-             end;
-        CharClass -> get_composition(Tail, StartChar,  
-                [Char|Mods], Result)
-    end.
-
-%% Used by get_composition/5
-comp_group(Char, [], Result) -> [Char|Result]; % no any modificators
-comp_group(Char, Mods, Result) ->
-    io:format("~nData: ~w  ~w~n", [Char,Mods]),
-    case comp_group2(Char, Mods) of
-        false -> lists:reverse(Mods) ++ [Char|Result];
-        {Comp, Mod} -> comp_group(Comp, Mods--[Mod], Result)
-    end.
-
-comp_group2(_, []) -> false; % There is no any compositions
-comp_group2(Char, [Mod|Mods]) ->
-    case comp([Char, Mod]) of
-        false -> comp_group2(Char, Mods);
-        Comp  -> {Comp, Mod}
-    end.
-    
 % http://unicode.org/reports/tr15/#Hangul
 is_hangul(Char) when ((Char>=16#1100) and (Char=<16#11FF)) % Hangul Jamo
                   or ((Char>=16#A960) and (Char=<16#A97C)) % Hangul Jamo Extended-A
@@ -719,7 +682,6 @@ hangul_composition(LastChar, [Char|StrTail], Result) ->
     SIndex = LastChar - ?HANGUL_SBASE,
     VIndex = Char - ?HANGUL_VBASE,
     TIndex = Char - ?HANGUL_TBASE,
-    io:format("Hangul: ~w~n", [{LIndex, SIndex, VIndex, TIndex}]),
     if
     % 2. check to see if two current characters are L and V
             (0 =< LIndex) and (LIndex < ?HANGUL_LCOUNT) 
