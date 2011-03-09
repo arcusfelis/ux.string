@@ -16,6 +16,7 @@
 -import(lists).
 -import(dict).
 -import(io).
+-import(io_lib).
 -import(unicode).
 -import(erlang).
 
@@ -43,6 +44,7 @@
 -export([ccc/1]).
 -export([is_nfc/1, is_nfd/1, is_nfkc/1, is_nfkd/1]).
 -export([to_nfc/1, to_nfd/1, to_nfkc/1, to_nfkd/1]).
+-export([to_ncr/1]).
 
 -export([is_comp_excl/1]).
 -export([is_hangul/1]).
@@ -499,13 +501,12 @@ not_in_array(X,Y) -> not lists:member(X,Y).
 
 freq(Str) -> freq_1(Str, dict:new()).
 
-freq_1([], Dict)         -> Dict;
-freq_1([Char|Str], Dict) -> freq_1(Str, dict:update_counter(Char, 1, Dict)).
+freq_1([Char|Str], Dict) -> freq_1(Str, dict:update_counter(Char, 1, Dict));
+freq_1([], Dict)         -> Dict.
 
 
 %% NORMALIZATION
 %% http://unicode.org/reports/tr15/
-is_nf([], _, Result, _) -> Result;
 is_nf([Head|Tail], LastCC, Result, CheckFun) -> 
     case ccc(Head) of
         CC when (LastCC > CC) and (CC =/= 0) -> no;
@@ -514,7 +515,8 @@ is_nf([Head|Tail], LastCC, Result, CheckFun) ->
                     m -> is_nf(Tail, CC, maybe,  CheckFun);
                     y -> is_nf(Tail, CC, Result, CheckFun)
                 end
-    end.
+    end;
+is_nf([], _, Result, _) -> Result.
 
 
 
@@ -535,17 +537,17 @@ to_nfkd([])  -> [];
 to_nfkd(Str) -> get_recursive_decomposition(false, Str).
 
 
-is_acsii(Char) when (Char>=0) and (Char=<16#7F) ->
-    true;
-is_acsii(_) ->
-    false.
+is_acsii(Char) when (Char>=0) and (Char=<16#7F) 
+    -> true;
+is_acsii(_) 
+    -> false.
 
 list_to_latin1(Str) ->
     lists:reverse(list_to_latin1(Str, [])).
 
-list_to_latin1([], Res) -> Res;
 list_to_latin1([Char|Str], Res) ->
-    list_to_latin1(Str, char_to_list(Char, [], Res)).
+    list_to_latin1(Str, char_to_list(Char, [], Res));
+list_to_latin1([],         Res) -> Res.
 
 % magic
 % Char>255
@@ -567,20 +569,19 @@ get_recursive_decomposition(Canonical, Str) ->
     normalize(
             get_recursive_decomposition(Canonical, Str, [])).
 
-get_recursive_decomposition(_, [], Result) -> Result;
 get_recursive_decomposition(Canonical, [Char|Tail], Result) ->
     IsHangul = is_hangul_precomposed(Char),
     if
-      IsHangul ->
-                get_recursive_decomposition(Canonical, Tail,
-                hangul_decomposition(Char, Result));
+      IsHangul
+      ->  get_recursive_decomposition(Canonical, Tail,
+               hangul_decomposition(Char, Result));
 
-      Char < 128 ->
-                get_recursive_decomposition(Canonical, Tail,
-                                                [Char|Result]);
+      Char < 128 
+      ->  get_recursive_decomposition(Canonical, Tail,
+               [Char|Result]);
 
-      true ->
-        case decomp(Char) of
+      true 
+      -> case decomp(Char) of
             []  -> get_recursive_decomposition(Canonical, Tail,
                                                 [Char|Result]);
             Dec -> case Canonical and is_compat(Char) of % not is_compat = singleton
@@ -590,11 +591,13 @@ get_recursive_decomposition(Canonical, [Char|Tail], Result) ->
                             Tail,  get_recursive_decomposition(Canonical,
                             Dec, Result))
                    end
-        end
-    end.
+         end
+    end;
+get_recursive_decomposition(_, [], Result) -> Result.
 
-normalize(Str) -> normalize1(Str, [], []).
-normalize1([], [], Result) -> Result;
+% Normalize NFD or NFKD
+normalize(Str)              -> normalize1(Str, [], []).
+normalize1([], [ ], Result) -> Result;
 normalize1([], Buf, Result) -> normalize2(lists:reverse(Buf), Result);
 normalize1([Char|Tail], Buf, Result) ->
     Class = ccc(Char),
@@ -609,7 +612,7 @@ normalize1([Char|Tail], Buf, Result) ->
     end.
 
 % Append chars from Buf to Result in a right order.
-normalize2([], Result) -> Result;
+normalize2([], Result)  -> Result;
 normalize2(Buf, Result) ->
     case normalize3(Buf, false, 0) of
         false             -> Result;
@@ -617,44 +620,12 @@ normalize2(Buf, Result) ->
     end.
 
 % Return char from Buf with max ccc
-normalize3([], Value, _) -> Value;
-normalize3([{CharClass, Char} = Value | Tail], _, MaxClass) 
-    when CharClass > MaxClass ->
-    normalize3(Tail, Value, CharClass);
-normalize3([_|Tail], Value, MaxClass) ->
-    normalize3(Tail, Value, MaxClass). 
-
-%normalize(Str) -> normalize2(decomp_sort1(Str, [], []), []).
-
-% First argument is reversed
-%normalize1([], [ ], Res) -> Res;
-%normalize1([], Buf, Res) -> [Buf|Res];
-%normalize1([Char|Tail], Buf, Res) ->
-%    case ccc(Char) of
-%        0     -> normalize1(Tail, [{0, Char}], [Buf|Res]);
-%        Class -> normalize1(Tail, [{Class, Char}|Buf], Res)
-%    end.
-
-%normalize2([       ], Res) -> Res;
-%normalize2([Buf|Str], Res) ->
-%    normalize2(Str, normalize3(Buf, Res)).
-
-%normalize3(Buf, Res)  -> 
-%    case get_comp_char_max(Buf, -1, {}) of 
-%        {} -> Res;
-%        {_, ModChar} = Value -> 
-%            normalize3(Buf--[Value], [ModChar|Res])
-%    end.
-
-%% Searches modificator with minimum class (ccc)
-%% Used by comp_char/2, normalize3/2
-%get_comp_char_max([], _, Res) -> Res;
-%get_comp_char_max([{ModClass, Mod} = Value|Mods], 
-%        MaxClass, Res) 
-%    when MaxClass<ModClass ->
-%    get_comp_char_max(Mods, ModClass, Value);
-%get_comp_char_max([_|Mods], MaxClass, Res) ->
-%    get_comp_char_max(Mods, MaxClass, Res).
+normalize3([{CharClass, _} = Value | Tail], _, MaxClass) 
+    when CharClass > MaxClass 
+ -> normalize3(Tail, Value, CharClass);
+normalize3([_|Tail], Value, MaxClass) 
+ -> normalize3(Tail, Value, MaxClass);
+normalize3([], Value, _) -> Value.
 
 
 %% Internal Composition Function
@@ -667,10 +638,6 @@ get_composition([Char|Tail]) ->
                     _ -> 256
                 end, [], [])).
 
-get_composition([], Char, LastClass, [],   Result) ->
-    [Char|Result];
-get_composition([], Char, LastClass, Mods, Result) ->
-    Mods ++ [Char|Result];
 get_composition([Char|Tail], LastChar, _, Mods, Result) when Char < 128 ->
     get_composition(Tail, Char, 0, [], Mods++[LastChar|Result]);
 get_composition([Char|Tail], LastChar, LastClass, Mods, Result) ->
@@ -684,7 +651,11 @@ get_composition([Char|Tail], LastChar, LastClass, Mods, Result) ->
         (CharClass == 0) -> get_composition(Tail, Char, CharClass, [], 
             Mods ++ [LastChar|Result]);
         true -> get_composition(Tail, LastChar, CharClass, [Char|Mods], Result)
-    end.
+    end;
+get_composition([], Char, _, [],   Result) ->
+    [Char|Result];
+get_composition([], Char, _, Mods, Result) ->
+    Mods ++ [Char|Result].
 
 % http://unicode.org/reports/tr15/#Hangul
 is_hangul(Char) when ((Char>=16#1100) and (Char=<16#11FF)) % Hangul Jamo
@@ -706,6 +677,7 @@ is_hangul_precomposed(Char)
                          -> true;
 is_hangul_precomposed(_) -> false.
 
+% Decompose one char of hangul
 hangul_decomposition(Char, Result) ->
     SIndex = Char - ?HANGUL_SBASE,
     case (SIndex < 0) or (SIndex >= ?HANGUL_SCOUNT) of
@@ -722,18 +694,21 @@ hangul_decomposition(Char, Result) ->
     end.
 
 
-hangul_composition([]) -> [];
+% Compose hangul characters
+% Example:
+% hangul_composition(lists:reverse(Str));
 hangul_composition([VChar|Tail]) ->
-    hangul_composition(Tail, VChar, []).
+    hangul_composition(Tail, VChar, []);
+hangul_composition([]) -> [].
 
-hangul_composition([], Result) -> Result;
+% used in hangul_composition/3
 hangul_composition([VChar|Tail], Result) ->
-    hangul_composition(Tail, VChar, Result).
+    hangul_composition(Tail, VChar, Result);
+hangul_composition([], Result) -> Result.
 
 % String is reversed
-hangul_composition([], Char, Result) ->
-    [Char|Result];
 hangul_composition([LChar|Tail], VChar, Result) ->
+   % 1. check to see if two current characters are L and V
    LIndex = LChar - ?HANGUL_LBASE,
     if 
       (0 =< LIndex) and (LIndex < ?HANGUL_LCOUNT) ->
@@ -744,61 +719,38 @@ hangul_composition([LChar|Tail], VChar, Result) ->
             LVChar = ?HANGUL_SBASE + ?HANGUL_TCOUNT  
                    * (LIndex * ?HANGUL_VCOUNT + VIndex),
                  
-                    % 1. check to see if two current characters are LV and T
-                    SIndex = LVChar - ?HANGUL_SBASE,
-%                    if
-%                      (0 =< SIndex) and (SIndex < ?HANGUL_SCOUNT) 
-%                      and ((SIndex rem ?HANGUL_TCOUNT) == 0) ->
-                         case Result of % Try get last appended char
-                            [] -> hangul_composition(Tail, [LVChar]);
-                            [TChar|Result2] ->
-                                TIndex = TChar - ?HANGUL_TBASE,
-                                if
-                                  (0 < TIndex) and (TIndex < ?HANGUL_TCOUNT) ->
-                                     LVTChar = LVChar + TIndex,
-                                     hangul_composition(Tail, [LVTChar|Result2]);
-                                  true ->
-                                    hangul_composition(Tail, [LVChar|Result])
-                                end
-                         end;
-%                      true -> hangul_composition(Tail, [LVChar|Result])
-%                     end;
-  
+                    % 2. check to see if two current characters are LV and T
+                    case Result of % Try get last appended char
+                       [] -> hangul_composition(Tail, [LVChar]);
+                       [TChar|Result2] ->
+                           TIndex = TChar - ?HANGUL_TBASE,
+                           if
+                             (0 < TIndex) and (TIndex < ?HANGUL_TCOUNT) ->
+                                LVTChar = LVChar + TIndex,
+                                hangul_composition(Tail, [LVTChar|Result2]);
+                             true ->
+                               hangul_composition(Tail, [LVChar|Result])
+                           end
+                    end;
           true -> hangul_composition(Tail, LChar, [VChar|Result])
         end;
       true -> hangul_composition(Tail, LChar, [VChar|Result])
-     end.
+     end;
+hangul_composition([], Char, Result) ->
+    [Char|Result].
 
-%hangul_composition([]) -> []; 
-%hangul_composition(Str) 
-%    -> [Code|RStr] = lists:reverse(Str),
-%        lists:reverse(hangul_composition(Code, RStr, [])).
-%
-%hangul_composition(Code, [], Result) -> [Code|Result];
-%hangul_composition(LastChar, [Char|StrTail], Result) ->
-%    LIndex = LastChar - ?HANGUL_LBASE,
-%    SIndex = LastChar - ?HANGUL_SBASE,
-%    VIndex = Char - ?HANGUL_VBASE,
-%    TIndex = Char - ?HANGUL_TBASE,
-%    if
-%   % 2. check to see if two current characters are L and V
-%            (0 =< LIndex) and (LIndex < ?HANGUL_LCOUNT) 
-%        and (0 =< VIndex) and (VIndex < ?HANGUL_VCOUNT) ->
-%                Comp = ?HANGUL_SBASE + ?HANGUL_TCOUNT  
-%                     * (LIndex * ?HANGUL_VCOUNT + VIndex),
-%                hangul_composition(Comp, StrTail, Result); 
-%
-%    % 1. check to see if two current characters are LV and T
-%            (0 =< SIndex) and (SIndex < ?HANGUL_SCOUNT) 
-%        and ((SIndex rem ?HANGUL_TCOUNT) == 0)
-%        and (0  < TIndex) and (TIndex < ?HANGUL_TCOUNT) ->
-%                Comp = LastChar + TIndex,
-%                hangul_composition(Comp, StrTail, Result); 
-%
-%        true -> hangul_composition(Char, StrTail, [LastChar|Result])
-%    end. 
-%
-%
-%
-%
-%
+%% Convert everything from utf-8 into an NCR (Numeric Character Reference)
+to_ncr(Str) -> to_ncr(Str, []).
+
+to_ncr([Char|Tail], Res) -> to_ncr(Tail, char_to_ncr(Char) ++ Res);
+to_ncr([         ], Res) -> Res.
+
+-spec char_to_ncr(char()) -> string().
+char_to_ncr(Char) when Char =< 16#7F 
+% one-byte character
+    -> [Char];
+char_to_ncr(Char) when Char =< 16#C2
+% non-utf8 character or not a start byte
+    -> [];
+char_to_ncr(Char) 
+    -> lists:flatten(io_lib:format("&#~p;", [Char])).   
