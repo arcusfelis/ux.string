@@ -7,7 +7,8 @@
 -import(unicode).
 -import(lists).
 -import(string).
--export([to_string/1, parse_int16/1]).
+-import(timer).
+-export([to_string/1, parse_int16/1, nfc_test/2]).
 
 explode_test_() ->
 	M = 'ux.string',
@@ -212,7 +213,7 @@ nfc_test_() ->
         {ok, InFd} = file:open(?NFTESTDATA, [read]),
                 io:setopts(InFd,[{encoding,utf8}]),
                         {timeout, 600, fun() -> 
-                        nfc_test(InFd, 10000000) end}.
+                        profile(?MODULE, nfc_test, [InFd, 10000000]) end}.
 parse_int16(Code) -> 
 	case io_lib:fread("~16u", Code) of
         {ok, [Int], []} -> Int;
@@ -227,3 +228,7 @@ to_string_test_() ->
 	[?_assertEqual(M:F("22 6e"), [34,110])
 	%,?_assertEqual(M:F(), )
 	].
+
+profile(M, F, A) ->
+    %apply({M, F}, A).
+    io:format(user, "Time: ~w~n", [timer:tc(M, F, A)]).
