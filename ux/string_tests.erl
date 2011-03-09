@@ -230,5 +230,5 @@ to_string_test_() ->
 	].
 
 profile(M, F, A) ->
-    %apply({M, F}, A).
+%   apply({M, F}, A).
     io:format(user, "Time: ~w~n", [timer:tc(M, F, A)]).
