@@ -49,8 +49,6 @@
 -export([is_comp_excl/1]).
 -export([is_hangul/1]).
 
--export([comp/1, decomp/1]).
-
 %% @doc Returns various "character types" which can be used 
 %% as a default categorization in implementations.
 %% Types:
@@ -642,7 +640,7 @@ get_composition([Char|Tail], LastChar, _, Mods, Result) when Char < 128 ->
     get_composition(Tail, Char, 0, [], Mods++[LastChar|Result]);
 get_composition([Char|Tail], LastChar, LastClass, Mods, Result) ->
     CharClass = ccc(Char),
-    Comp = comp([LastChar, Char]),
+    Comp = comp(LastChar, Char),
     if
         (Comp =/= false) 
         and ((LastClass < CharClass)
