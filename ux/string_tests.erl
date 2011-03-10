@@ -8,7 +8,7 @@
 -import(lists).
 -import(string).
 -import(timer).
--export([to_string/1, parse_int16/1, nfc_test/2]).
+-export([to_string/1, parse_int16/1, nfc_test/2, nfc_prof/0]).
 
 explode_test_() ->
 	M = 'ux.string',
@@ -209,11 +209,14 @@ nfc_test(InFd, Max) ->
         eof -> ok
     end.
 
-nfc_test_() ->
+nfc_prof() ->
         {ok, InFd} = file:open(?NFTESTDATA, [read]),
                 io:setopts(InFd,[{encoding,utf8}]),
+                nfc_test(InFd, 10000000),
+                ok.
+nfc_test_() ->
                         {timeout, 600, fun() -> 
-                        profile(?MODULE, nfc_test, [InFd, 10000000]) end}.
+                        profile(?MODULE, nfc_prof, []) end}.
 parse_int16(Code) -> 
 	case io_lib:fread("~16u", Code) of
         {ok, [Int], []} -> Int;

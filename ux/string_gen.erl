@@ -144,7 +144,8 @@ from_hex([$<|Str]) ->
         SubStr = string:sub_string(Str, string:chr(Str, $>)+1),
         from_hex(SubStr);
 from_hex(Str) -> 
-        string:tokens(Str, " ").
+        lists:map(fun hex_to_int/1,
+                    string:tokens(Str, " ")).
 
 hex_to_int(Code) ->
 	{ok, [Int], []} = io_lib:fread("~16u", Code),

@@ -526,7 +526,10 @@ is_nfkc(Str) -> is_nf(Str, 0, yes, fun nfkc_qc/1).
 is_nfkd(Str) -> is_nf(Str, 0, yes, fun nfkd_qc/1).
 
 to_nfc([])   -> [];
-to_nfc(Str)  -> get_composition(get_recursive_decomposition(true,  Str)).
+to_nfc(Str)  -> case is_nfc(Str) of
+    yes -> Str;
+    _   -> get_composition(to_nfd(Str))
+end.
 to_nfkc([])  -> [];
 to_nfkc(Str) -> get_composition(get_recursive_decomposition(false, Str)).
 to_nfd([])   -> [];
@@ -738,7 +741,7 @@ hangul_composition([], Char, Result) ->
     [Char|Result].
 
 %% Convert everything from utf-8 into an NCR (Numeric Character Reference)
-to_ncr(Str) -> to_ncr(Str, []).
+to_ncr(Str) -> to_ncr(lists:reverse(Str), []).
 
 to_ncr([Char|Tail], Res) -> to_ncr(Tail, char_to_ncr(Char) ++ Res);
 to_ncr([         ], Res) -> Res.
