@@ -125,7 +125,7 @@ TopChars = lists:sort(fun(X1,X2) -> ux.string:freq_dict(X1)>ux.string:freq_dict(
 	MapPid ! {char_type, "char_type(_) -> other.", []},
 	MapPid ! {is_compat, "is_compat(_) -> false.", []},
 	Pid    ! {decomp, "decomp(_) -> [].", []},
-	Pid    ! {comp, "comp(_) -> false.", []},
+	Pid    ! {comp, "comp(_, _) -> false.", []},
 	Pid    ! {char_comment, "char_comment(_) -> [].", []},
 	MapPid ! {ccc, "ccc(_) -> 0.", []},
     ok.
@@ -144,12 +144,7 @@ from_hex([$<|Str]) ->
         SubStr = string:sub_string(Str, string:chr(Str, $>)+1),
         from_hex(SubStr);
 from_hex(Str) -> 
-        Data = string:tokens(Str, " "),
-                "[" 
-                 ++ string:join(
-                        lists:map(fun(X) -> "16#" ++ X end, Data),
-                        ",") 
-                 ++ "]".
+        string:tokens(Str, " ").
 
 hex_to_int(Code) ->
 	{ok, [Int], []} = io_lib:fread("~16u", Code),
@@ -194,19 +189,22 @@ do_gen(InFd, Pid, TopChars, CompList, MapPid) ->
                 _ ->        Compat = false
             end,
 
-            Dec = from_hex(DecompMap),
+            Dec = from_hex(DecompMap), 
             % Add decomposition mapping
             Pid ! {decomp,
-            "decomp(~w) -> ~s; ~n",
+            "decomp(~w) -> ~w; ~n",
             [Int, Dec]},
 
             % Add composition mapping 
             case ((not lists:member(Dec, CompList)) 
               and (false == Compat) 
               and (false == ux.string:is_comp_excl(Int))) of
-                true -> Pid ! {comp,
-                        "comp(~s) -> ~w; ~n",
-                        [Dec, Int]},
+                true -> case Dec of % skip one char mapping
+                                    [D1,D2] -> Pid ! {comp,
+                                                      "comp(~w, ~w) -> ~w; ~n",
+                                                       [D1, D2, Int]};
+                                    _           -> excluding
+                             end,
                         NewCompList = [Dec|CompList];
                 false -> NewCompList = CompList, excluding
             end,
