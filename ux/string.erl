@@ -47,7 +47,10 @@
 -export([to_ncr/1]).
 
 -export([is_comp_excl/1]).
--export([is_hangul/1]).
+-export([is_hangul/1, is_acsii/1]).
+
+-export([to_graphemes/1, reverse/1]).
+-export([length/1, len/1]).
 
 %% @doc Returns various "character types" which can be used 
 %% as a default categorization in implementations.
@@ -57,12 +60,12 @@
 -export([char_type/1, char_types/1]).
 
 -define(ASSERT(TEST,TRUE,FALSE), case TEST of 
-	true -> TRUE; 
+	true  -> TRUE; 
 	false -> FALSE
 end).
 
 -define(ASSERT_IN_ARRAY_LAMBDA(TEST), case TEST of 
-	true -> fun lists:member/2; 
+	true  -> fun lists:member/2; 
 	false -> fun not_in_array/2
 end).
 
@@ -284,15 +287,22 @@ to_string(Str) when is_integer(Str) -> [Str].
 
 explode([], _) -> false;
 explode(_, []) -> [];
+explode([Delimeter], Str) when is_integer(Delimeter) -> 
+    explode_simple(Delimeter, lists:reverse(Str), [], []);
+explode(Delimeter,   Str) when is_integer(Delimeter) -> 
+    explode_simple(Delimeter, lists:reverse(Str), [], []);
 explode(Delimeter, Str) -> 
 	case explode_cycle(Delimeter, Str, [], []) of
 		false -> [Str];
 		Res -> explode_reverse(Res)
 	end.
+
 explode([], _, _) -> false;
-explode(Delimeter, Str, Limit) when (Limit>0) -> 
+explode(Delimeter, Str, Limit) when is_integer(Delimeter) ->
+    explode([Delimeter], Str, Limit); 
+explode(Delimeter, Str, Limit) when Limit > 0 -> 
 	explode_reverse(explode_cycle_pos(Delimeter, Str, [], [], Limit));
-explode(Delimeter, Str, Limit) when (Limit<0) -> 
+explode(Delimeter, Str, Limit) when Limit < 0 -> 
 	case explode_cycle(Delimeter, Str, [], []) of
 		false -> [];
 		Res -> explode_reverse(lists:nthtail(-Limit, Res))
@@ -301,18 +311,28 @@ explode(Delimeter, Str, _) -> explode(Delimeter, Str).
 
 explode_reverse(Res) -> lists:map({lists, reverse}, lists:reverse(Res)). 
 
+%% Simple and fast realization.
+%% Delimeter is one char.
+%% Str is reversed string.
+explode_simple(Delimeter, [H|T], Buf, Res) when H == Delimeter ->
+    explode_simple(Delimeter, T, [     ], [Buf|Res]);
+explode_simple(Delimeter, [H|T], Buf,     Res) ->
+    explode_simple(Delimeter, T, [H|Buf], Res);
+explode_simple(_        , [   ], [     ], Res) -> Res;
+explode_simple(_        , [   ], Buf,     Res) -> [Buf | Res].
+
 %% @doc This function puts a part of the string before the delimeter in Buf, 
 %% if the delimeter is a substring of Str, then return Buf.
 %% Buf is a reversed list of reversed parts of the string.
 %% Return false, if Delimeter is not a part of Str.
 %% @end
-explode_cycle(_, [], _, []) -> false;
-explode_cycle(_, [], Buf, Result) -> [Buf|Result];
+explode_cycle(_, [], _,   [])     -> false;
+explode_cycle(_, [], Buf, Result) -> [Buf | Result];
 explode_cycle(Delimeter, Str, Buf, Result) ->
 	case explode_check(Delimeter, Str) of
 		false -> [C|Tail] = Str, 
 			explode_cycle(Delimeter, Tail, [C|Buf], Result);
-		Tail -> explode_cycle(Delimeter, Tail, [], [Buf|Result])
+		Tail -> explode_cycle(Delimeter, Tail, [], [Buf | Result])
 	end.
 
 explode_cycle_pos(_, [], Buf, Result, _) -> [Buf|Result];
@@ -322,7 +342,7 @@ explode_cycle_pos(Delimeter, Str, Buf, Result, Limit) ->
 		false -> [C|Tail] = Str, 
 			explode_cycle_pos(Delimeter, Tail, [C|Buf], Result, 
 					Limit);
-		Tail -> explode_cycle_pos(Delimeter, Tail, [], [Buf|Result], 
+		Tail  -> explode_cycle_pos(Delimeter, Tail, [], [Buf|Result], 
 					Limit-1)
 	end.
 
@@ -335,7 +355,7 @@ explode_check([Delimeter], Str) when is_list(Delimeter) ->
 	explode_check(Delimeter, Str);	
 explode_check([Delimeter|DelArr], Str) when is_list(Delimeter) ->
 	case explode_check(Delimeter, Str) of
-		false -> explode_check(DelArr, Str);
+		false  -> explode_check(DelArr, Str);
 		Result -> Result 
 	end;
 explode_check([DelHead|DelTail], [Head|Tail]) when (DelHead == Head) ->
@@ -364,16 +384,16 @@ htmlspecialchars(Str) -> hsc(Str).
 %% @see ux.string:htmlspecialchars/1
 -spec hsc(string()) -> string().
 
-hsc([]) -> [];
+hsc([ ]) -> [];
 hsc(Str) -> hsc(lists:reverse(Str), []).
 
-hsc([], Buf) -> Buf;
-hsc([$"|T], Buf) -> hsc(T, lists:append("&quot;", Buf));
-hsc([$'|T], Buf) -> hsc(T, lists:append("&#39;", Buf));
-hsc([$&|T], Buf) -> hsc(T, lists:append("&amp;", Buf));
-hsc([$<|T], Buf) -> hsc(T, lists:append("&lt;", Buf));
-hsc([$>|T], Buf) -> hsc(T, lists:append("&gt;", Buf));
-hsc([H|T], Buf) -> hsc(T, [H|Buf]).
+hsc([      ], Buf) -> Buf;
+hsc([$" | T], Buf) -> hsc(T, lists:append("&quot;", Buf));
+hsc([$' | T], Buf) -> hsc(T, lists:append("&#39;", Buf));
+hsc([$& | T], Buf) -> hsc(T, lists:append("&amp;", Buf));
+hsc([$< | T], Buf) -> hsc(T, lists:append("&lt;", Buf));
+hsc([$> | T], Buf) -> hsc(T, lists:append("&gt;", Buf));
+hsc([H  | T], Buf) -> hsc(T, [H|Buf]).
 
 %% @doc Deletes tags from the string.
 %%
@@ -393,7 +413,7 @@ hsc([H|T], Buf) -> hsc(T, [H|Buf]).
 strip_tags(Str) -> st(Str, []).
 
 strip_tags(Str, Allowed) -> st(Str, Allowed).
-strip_tags(Str, Allowed, Sub) -> st(Str, Allowed, Sub).
+strip_tags(Str, Allowed, Alt) -> st(Str, Allowed, Alt).
 
 %% @see ux.string:strip_tags/1
 st(Str) -> st_cycle(Str, [], 0, []).
@@ -403,57 +423,64 @@ st(Str, [$<|Allowed]) -> st(Str, tags_to_list(Allowed));
 st(Str, Allowed) -> st(Str, Allowed, []). 
 %% @see ux.string:strip_tags/3
 st(Str, [], []) -> st(Str); 
-st(Str, [$<|Allowed], Sub) -> st(Str, tags_to_list(Allowed), Sub);
-st(Str, [], Sub) -> st_cycle(Str, [], 0, lists:reverse(Sub)); 
-st(Str, Allowed, Sub) -> 
-	st_cycle_with_allowed_tags(Str, [], string:to_lower(Str), 
+st(Str, [$<|Allowed], Alt) -> st(Str, tags_to_list(Allowed), Alt);
+st(Str, [], Alt) -> st_cycle(Str, [], 0, lists:reverse(Alt)); 
+st(Str, Allowed, Alt) -> 
+	st_cycle_with_allowed(Str, [],
 			lists:map({lists, reverse},
-			lists:map({string, to_lower},
-			lists:map({?MODULE, to_string}, Allowed))), 
-			lists:reverse(Sub)).
+		    	lists:map({string, to_lower},
+		        	lists:map({?MODULE, to_string}, Allowed))), 
+			lists:reverse(Alt)).
 
 %% @doc Drops all tags from the string.
 %% Cnt is a count of not closed <
 %% If we found <, then Cnt++
 %% If we found >, then Cnt--
 %% @end
-st_cycle([], Buf, _, _) -> lists:reverse(Buf);
-st_cycle([$<|Tail], Buf, Cnt, Sub) -> st_cycle(Tail, Buf, Cnt + 1, Sub);
-st_cycle([$>|Tail], Buf, 1, Sub) -> st_cycle(Tail, lists:append(Sub, Buf), 0, Sub);
-st_cycle([$>|Tail], Buf, 0, Sub) -> st_cycle(Tail, Buf, 0, Sub);
-st_cycle([$>|Tail], Buf, Cnt, Sub) -> st_cycle(Tail, Buf, Cnt - 1, Sub);
-st_cycle([Head|Tail], Buf, 0, Sub) -> st_cycle(Tail, [Head|Buf], 0, Sub);
-st_cycle([_|Tail], Buf, Cnt, Sub) -> st_cycle(Tail, Buf, Cnt, Sub).
+st_cycle([$< | Tail], Buf, Cnt, Alt) -> st_cycle(Tail,        Buf, Cnt + 1, Alt);
+st_cycle([$> | Tail], Buf, 1,   Alt) -> st_cycle(Tail, Alt ++ Buf, 0,       Alt);
+st_cycle([$> | Tail], Buf, 0,   Alt) -> st_cycle(Tail,        Buf, 0,       Alt);
+st_cycle([$> | Tail], Buf, Cnt, Alt) -> st_cycle(Tail,        Buf, Cnt - 1, Alt);
+st_cycle([H  | Tail], Buf, 0,   Alt) -> st_cycle(Tail, [H | Buf] , 0,       Alt);
+st_cycle([_  | Tail], Buf, Cnt, Alt) -> st_cycle(Tail,        Buf, Cnt,     Alt);
+st_cycle([         ], Buf, _,   _  ) -> lists:reverse(Buf).
+
+%% Is used by st_cycle_with_allowed
+st_get_tag    ([$> | T],       Buf , Tag, _, 1) ->
+	{Tag, [$> | Buf], T};
+st_get_tag    ([$> | T],       Buf , Tag    , _    , Cnt    ) ->
+	st_get_tag(T       ,       Buf , Tag    , false, Cnt - 1);
+st_get_tag    ([$< | T],       Buf , Tag    , false, Cnt    ) ->
+	st_get_tag(T       ,       Buf , Tag    , false, Cnt + 1);
+st_get_tag    ([$  | T],       Buf , Tag    , _    , Cnt    ) ->
+	st_get_tag(T       , [$  | Buf], Tag    , false, Cnt    );
+st_get_tag    ([$/ | T],       Buf , Tag    , true , Cnt    ) ->
+	st_get_tag(T       , [$/ | Buf], Tag    , true , Cnt    );
+st_get_tag    ([H  | T],       Buf , Tag    , true , Cnt    ) ->
+	st_get_tag(T       , [H  | Buf], [H|Tag], true , Cnt    );
+% TODO: control atributes (onclick, for example. xss fix!)
+st_get_tag    ([H  | T],       Buf , Tag    , false, Cnt    ) ->
+	st_get_tag(T       , [H  | Buf], Tag    , false, Cnt    );
+st_get_tag    ([      ], _         , _      , _,     _) -> false; 
+st_get_tag    (_       , [        ], _      , _,     _) -> false. 
 
 %% @doc Drops tags, but saves tags in the Allowed list.
-st_cycle_with_allowed_tags([], Buf, _, _, _) -> lists:reverse(Buf);	
-st_cycle_with_allowed_tags(Str, Buf, LowerStr, Allowed, Sub) ->
-	case st_get_tag(Str, LowerStr) of
-		{Tag, SubStr, Tail, LowerTail} -> 
-			case lists:member(Tag, Allowed) of 
-				true -> st_cycle_with_allowed_tags(Tail, 
-					lists:append(SubStr, Buf), LowerTail, 
-					Allowed, Sub);
-				false -> st_cycle_with_allowed_tags(Tail,
-					lists:append(Sub, Buf), LowerTail, 
-					Allowed, Sub)
+st_cycle_with_allowed([$< | T], Res, Allowed, Alt) ->
+	case st_get_tag(T, [$<], [], true, 1) of 
+		{Tag, SubStr, Tail} -> 
+			case lists:member(string:to_lower(Tag), Allowed) of 
+				true  -> st_cycle_with_allowed(Tail, 
+					SubStr ++ Res, Allowed, Alt); % Allowed tag
+				false -> st_cycle_with_allowed(Tail,
+					Alt    ++ Res, Allowed, Alt)  % Alt is replacement
 			end;
-		{Char, Tail, LowerTail} -> st_cycle_with_allowed_tags(Tail,
-					[Char|Buf], LowerTail, Allowed, Sub);
-		{Tail, LowerTail} -> st_cycle_with_allowed_tags(Tail, Buf, 
-					LowerTail, Allowed, Sub)
-	end.
-
-%% @doc If Str is begining from <, then returns {Tag, SubStr, Tail, LowerTail},
-%% else returns {first char of the string, Tail, LowerTail}.
-%% @end 
-st_get_tag([$<|Tail], [_|LowerTail]) ->
-	st_get_tag_end(Tail, LowerTail, [$<], [], true, 1);
-st_get_tag([$>|Tail], [_|LowerTail]) ->
-	% First symbol of a string is $>.
-	{Tail, LowerTail};
-st_get_tag([Char|Tail], [_|LowerTail]) ->
-	{Char, Tail, LowerTail}.
+        _ -> lists:reverse(Res) % deletes unclosed string 
+    end;
+st_cycle_with_allowed([$> | T], Res, Allowed, Alt) ->
+    st_cycle_with_allowed(T, Res, Allowed, Alt);
+st_cycle_with_allowed([Ch | T], Res, Allowed, Alt) ->
+    st_cycle_with_allowed(T, [Ch | Res], Allowed, Alt);
+st_cycle_with_allowed([      ], Res, _, _) -> lists:reverse(Res).
 
 %% @doc Convert string of tags to list
 %% Example:
@@ -461,11 +488,12 @@ st_get_tag([Char|Tail], [_|LowerTail]) ->
 %% ["a", "b"]
 %% @end
 tags_to_list(Str) -> tags_to_list(Str, [], []).
-tags_to_list([$<|Str], Res, Buf) -> tags_to_list(Str, Res, Buf);
-tags_to_list([$/|Str], Res, Buf) -> tags_to_list(Str, Res, Buf);
-tags_to_list([$>|Str], Res, Buf) -> tags_to_list(Str, [lists:reverse(Buf)|Res], []);
-tags_to_list([Char|Str], Res, Buf) -> tags_to_list(Str, Res, [Char|Buf]);
-tags_to_list([], Res, _) -> Res. 
+
+tags_to_list([$< | Str], Res, Buf) -> tags_to_list(Str, Res, Buf);
+tags_to_list([$/ | Str], Res, Buf) -> tags_to_list(Str, Res, Buf);
+tags_to_list([$> | Str], Res, Buf) -> tags_to_list(Str, [lists:reverse(Buf)|Res], []);
+tags_to_list([Ch | Str], Res, Buf) -> tags_to_list(Str, Res, [Ch|Buf]);
+tags_to_list([        ], Res, _  ) -> Res. 
 
 
 %% @doc Extract a tag from the beginning of the string..
@@ -477,20 +505,6 @@ tags_to_list([], Res, _) -> Res.
 %% Capture chars of a tag name or not, 
 %% a number of unclosed tags}
 %% @end
-st_get_tag_end([$>|Tail], [_|LowerTail], Buf, Tag, _, 1) ->
-	{Tag, [$>|Buf], Tail, LowerTail};
-st_get_tag_end([$>|Tail], [_|LowerTail], Buf, Tag, CaptureFlag, Cnt) ->
-	st_get_tag_end(Tail, LowerTail, Buf, Tag, CaptureFlag, Cnt - 1);
-st_get_tag_end([$<|Tail], [_|LowerTail], Buf, Tag, CaptureFlag, Cnt) ->
-	st_get_tag_end(Tail, LowerTail, Buf, Tag, CaptureFlag, Cnt + 1);
-st_get_tag_end([$ |Tail], [_|LowerTail], Buf, Tag, _, Cnt) ->
-	st_get_tag_end(Tail, LowerTail, [$ |Buf], Tag, false, Cnt);
-st_get_tag_end([$/|Tail], [_|LowerTail], Buf, Tag, true, Cnt) ->
-	st_get_tag_end(Tail, LowerTail, [$/|Buf], Tag, true, Cnt);
-st_get_tag_end([Head|Tail], [LowerHead|LowerTail], Buf, Tag, true, Cnt) ->
-	st_get_tag_end(Tail, LowerTail, [Head|Buf], [LowerHead|Tag], true, Cnt);
-st_get_tag_end([Head|Tail], [_|LowerTail], Buf, Tag, false, Cnt) ->
-	st_get_tag_end(Tail, LowerTail, [Head|Buf], Tag, false, Cnt).
 
 not_in_array(X,Y) -> not lists:member(X,Y).
 
@@ -573,15 +587,15 @@ get_recursive_decomposition(Canonical, Str) ->
 get_recursive_decomposition(Canonical, [Char|Tail], Result) ->
     IsHangul = is_hangul_precomposed(Char),
     if
-      IsHangul
+      IsHangul   % Other algorithm
       ->  get_recursive_decomposition(Canonical, Tail,
                hangul_decomposition(Char, Result));
 
-      Char < 128 
+      Char < 128 % Cannot be decomposed 
       ->  get_recursive_decomposition(Canonical, Tail,
                [Char|Result]);
 
-      true 
+      true       % Try decomposed
       -> case decomp(Char) of
             []  -> get_recursive_decomposition(Canonical, Tail,
                                                 [Char|Result]);
@@ -722,20 +736,20 @@ hangul_composition([LChar|Tail], VChar, Result) ->
                  
                     % 2. check to see if two current characters are LV and T
                     case Result of % Try get last appended char
-                       [] -> hangul_composition(Tail, [LVChar]);
+                       [] -> hangul_composition(Tail, [LVChar]);             % is first, LV
                        [TChar|Result2] ->
                            TIndex = TChar - ?HANGUL_TBASE,
                            if
                              (0 < TIndex) and (TIndex < ?HANGUL_TCOUNT) ->
                                 LVTChar = LVChar + TIndex,
-                                hangul_composition(Tail, [LVTChar|Result2]);
+                                hangul_composition(Tail, [LVTChar|Result2]); % is LV&T
                              true ->
-                               hangul_composition(Tail, [LVChar|Result])
+                               hangul_composition(Tail, [LVChar|Result])     % is LV
                            end
                     end;
-          true -> hangul_composition(Tail, LChar, [VChar|Result])
+          true -> hangul_composition(Tail, LChar, [VChar|Result])            % skip
         end;
-      true -> hangul_composition(Tail, LChar, [VChar|Result])
+      true -> hangul_composition(Tail, LChar, [VChar|Result])                % skip
      end;
 hangul_composition([], Char, Result) ->
     [Char|Result].
@@ -755,3 +769,44 @@ char_to_ncr(Char) when Char =< 16#C2
     -> [];
 char_to_ncr(Char) 
     -> lists:flatten(io_lib:format("&#~p;", [Char])).   
+
+%% Split unicode string on graphemes http://en.wikipedia.org/wiki/Grapheme
+to_graphemes(Str) ->
+    explode_reverse(to_graphemes_raw(Str, [], [])).
+
+%% Returns not reversed result.
+to_graphemes_raw([H|T], Buf, Res) ->
+    case {ccc(H), Buf} of
+        {0, []} -> to_graphemes_raw(T, [H], Res);
+        {0, _ } -> to_graphemes_raw(T, [H], [Buf|Res]);
+        _       -> to_graphemes_raw(T, [H|Buf], Res)
+    end;
+to_graphemes_raw([   ], [ ], Res) -> Res;
+to_graphemes_raw([   ], Buf, Res) -> [Buf | Res].
+
+%% Compute count of graphemes in the string
+length(Str) ->
+    len_graphemes(Str, 0).
+
+len(Str) ->
+    len_graphemes(Str, 0).
+
+len_graphemes([H|T], Len) ->
+    case ccc(H) of
+        0 -> len_graphemes(T, Len + 1);
+        _ -> len_graphemes(T, Len)
+    end;
+len_graphemes([   ], Len) -> Len.
+
+%% Reverses string graphemes 
+reverse(Str) ->
+    reverse_flatten(
+        lists:reverse(to_graphemes_raw(Str, [], [])), [], []).
+
+reverse_flatten(    [H|T], [],       Res) ->
+    reverse_flatten(T,     H,        Res);
+reverse_flatten(    T,     [HH|TT],  Res) ->
+    reverse_flatten(T,     TT,       [HH|Res]);
+reverse_flatten(    _,     [],       Res) ->
+                                     Res.
+

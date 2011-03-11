@@ -8,7 +8,7 @@
 -import(lists).
 -import(string).
 -import(timer).
--export([to_string/1, parse_int16/1, nfc_test/2, nfc_prof/0]).
+-export([to_string/1, parse_int16/1, nfc_test/2, nfc_prof/1]).
 
 explode_test_() ->
 	M = 'ux.string',
@@ -22,6 +22,9 @@ explode_test_() ->
 
 	,?_assertEqual(M:F([":", ";"], "aa:;:aa"), ["aa", "", "", "aa"])
 	,?_assertEqual(M:F([";:", ";"], "aa:;:aa"), ["aa:", "aa"])
+
+	,?_assertEqual(M:F($c, "dfsawcddcs"), ["dfsaw", "dd", "s"])
+	,?_assertEqual(M:F($c, "dfsawcddcs",2 ), ["dfsaw", "ddcs"])
 
 	% empty delimeter
 	,?_assertEqual(M:F("", "test"), false)
@@ -90,6 +93,7 @@ strip_tags_test_X(F) ->
 % PHP style
 	,?_assertEqual(M:F("<b>a b c</b>", "<b>"), "<b>a b c</b>")
 	,?_assertEqual(M:F("<span>a b c</span>", "<b><span>"), "<span>a b c</span>")
+	,?_assertEqual(M:F("<a><b>test<a", "a"), "<a>test")
 	].
 tags_to_list_test_() ->
 	M = 'ux.string',
@@ -164,7 +168,7 @@ nfc_test(InFd, Max) ->
     NFKD = fun 'ux.string':to_nfkd/1,
     case file:read_line(InFd) of
         {ok, []} -> nfc_test(InFd, Max);
-        {ok, Data} -> Str = unicode:characters_to_list(Data, utf8), 
+        {ok, Data} -> 
             case ux.string:explode("#", Data) of
                 [LineWithoutComment|_] ->  
                     case lists:map(fun ?MODULE:to_string/1, 
@@ -209,14 +213,14 @@ nfc_test(InFd, Max) ->
         eof -> ok
     end.
 
-nfc_prof() ->
+nfc_prof(Count) ->
         {ok, InFd} = file:open(?NFTESTDATA, [read]),
                 io:setopts(InFd,[{encoding,utf8}]),
-                nfc_test(InFd, 10000000),
+                nfc_test(InFd, Count),
                 ok.
 nfc_test_() ->
                         {timeout, 600, fun() -> 
-                        profile(?MODULE, nfc_prof, []) end}.
+                        profile(?MODULE, nfc_prof, [10000000]) end}.
 parse_int16(Code) -> 
 	case io_lib:fread("~16u", Code) of
         {ok, [Int], []} -> Int;
