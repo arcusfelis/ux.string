@@ -12,6 +12,7 @@
 %% did not receive this file, see http://www.fsf.org/copyleft/lgpl.html
 %% %CopyrightEnd%
 -module(ux.string).
+-include("string/config.hrl").
 
 -import(lists).
 -import(dict).
@@ -82,41 +83,41 @@ end).
 
 
 
--include("string/char_to_upper.hrl").
+-include(?UX_STRING_INC ++ "char_to_upper.hrl").
 %char_to_upper(C) -> C.
--include("string/char_to_lower.hrl").
+-include(?UX_STRING_INC ++ "char_to_lower.hrl").
 %char_to_lower(C) -> C.
 
--include("string/is_upper.hrl").
+-include(?UX_STRING_INC ++ "is_upper.hrl").
 %% @doc Returns true, if is C is uppercase. 
 -spec is_upper(C::char()) -> boolean().
 %is_upper(_) -> false.
--include("string/is_lower.hrl").
+-include(?UX_STRING_INC ++ "is_lower.hrl").
 %% @doc Returns true, if is C is lowercase.
 -spec is_lower(C::char()) -> boolean().
 %is_lower(_) -> false.
 
--include("string/char_comment.hrl").
--include("string/char_type.hrl").
+-include(?UX_STRING_INC ++ "char_comment.hrl").
+-include(?UX_STRING_INC ++ "char_type.hrl").
 %% @doc Returns a char type.
 -spec char_type(C::char()) -> atom().
 %char_type(_) -> other.
 char_types(Str)	-> lists:map({?MODULE, char_type}, Str).
 
--include("string/freq_dict.hrl").
--include("string/ccc.hrl").
+-include("string/includes/freq_dict.hrl").
+-include("string/includes/ccc.hrl").
 
 %% From http://www.unicode.org/Public/UNIDATA/DerivedNormalizationProps.txt
--include("string/nfc_qc.hrl").
--include("string/nfd_qc.hrl").
--include("string/nfkc_qc.hrl").
--include("string/nfkd_qc.hrl").
+-include("string/includes/nfc_qc.hrl").
+-include("string/includes/nfd_qc.hrl").
+-include("string/includes/nfkc_qc.hrl").
+-include("string/includes/nfkd_qc.hrl").
 
 %% From http://www.unicode.org/Public/UNIDATA/CompositionExclusions.txt
--include("string/is_comp_excl.hrl").
--include("string/is_compat.hrl").
--include("string/decomp.hrl").
--include("string/comp.hrl").
+-include("string/includes/is_comp_excl.hrl").
+-include("string/includes/is_compat.hrl").
+-include("string/includes/decomp.hrl").
+-include("string/includes/comp.hrl").
 
 %freq_dict(_) -> 0.
 

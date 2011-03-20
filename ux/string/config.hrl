@@ -1,0 +1,3 @@
+-define(UNIDATA_VERSION,   "UNIDATA").
+-define(UNIDATA_DIRECTORY, "string/data/" ++ ?UNIDATA_VERSION ++ "/").
+-define(UX_STRING_INC, "string/includes/").
