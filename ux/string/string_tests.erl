@@ -1,7 +1,7 @@
 -module(ux.string_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("config.hrl").
--define(NFTESTDATA, UNIDATA_DIRECTORY ++ "NormalizationTest.txt"). 
+-define(NFTESTDATA, ?UNIDATA_DIRECTORY ++ "NormalizationTest.txt"). 
 -import(file).
 -import(io).
 -import(io_lib).
